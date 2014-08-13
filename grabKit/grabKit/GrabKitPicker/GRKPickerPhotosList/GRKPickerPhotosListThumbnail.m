@@ -87,7 +87,17 @@ static UIImage * thumbnailPlaceholderImage;
                                           selectedIconSize );
     selectedImageView.alpha = .0;
     
+    NSString * expandPath = [GRK_BUNDLE pathForResource:@"thumbnail_expand" ofType:@"png"];
+    UIImage * expandIcon = [UIImage imageWithContentsOfFile:expandPath];
+    CGFloat expandIconSize = 25;
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    [button setImage:expandIcon forState:UIControlStateNormal];
     
+    button.frame = CGRectMake(self.contentView.bounds.size.width - expandIconSize,
+                              self.contentView.bounds.size.height - expandIconSize, expandIconSize, expandIconSize);
+    button.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
+    
+    [self.contentView addSubview:button];
 }
 
 

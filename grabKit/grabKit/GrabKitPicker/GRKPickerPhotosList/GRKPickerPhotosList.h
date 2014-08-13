@@ -59,6 +59,8 @@ typedef NSUInteger GRKPickerPhotosListState;
  */
 @interface GRKPickerPhotosList : UIViewController<UICollectionViewDataSource, UICollectionViewDelegate > {
     
+    
+    UILabel *_tipLabel;
     UICollectionView * _collectionView;
 
     UIBarButtonItem * _cancelButton;

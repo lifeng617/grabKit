@@ -70,6 +70,8 @@ GRKPickerViewController * pickerViewControllerSharedInstance = nil;
         self.allowsSelection = YES;
         self.allowsMultipleSelection = NO;
         self.keepsSelection = NO;
+        self.maximumSelectionAllowed = 1;
+        self.minimumSelectionAllowed = 1;
         
         runningOperations = 0;
         

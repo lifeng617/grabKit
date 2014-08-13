@@ -49,6 +49,14 @@
         services = [NSMutableArray array];
         
         
+        
+        #if GRK_DEVICE_SERVICE
+        NSDictionary * device = [NSDictionary dictionaryWithObjectsAndKeys:@"GRKDeviceGrabber", @"class",
+                                 (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)?@"iPad":@"iPhone", @"title",
+                                 nil];
+        [services addObject:device];
+        #endif
+        
         // build a dictionary per service
         #if GRK_FACEBOOK_SERVICE
         NSDictionary * facebook = [NSDictionary dictionaryWithObjectsAndKeys:@"GRKFacebookGrabber", @"class",
@@ -78,17 +86,8 @@
         [services addObject:picasa];
         #endif
         
-        #if GRK_DEVICE_SERVICE
-        NSDictionary * device = [NSDictionary dictionaryWithObjectsAndKeys:@"GRKDeviceGrabber", @"class", 
-                                 (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)?@"iPad":@"iPhone", @"title",
-                                 nil];
-        [services addObject:device];
-        #endif
-        
 
         //services = [[NSArray alloc] initWithObjects:facebook, flickr, instagram, picasa, device, nil];
-        
-        
     }
     
     return self;    

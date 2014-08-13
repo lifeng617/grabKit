@@ -392,6 +392,8 @@
 		5FF1FF3715BF21FF00EF2CE4 /* GRKServiceQueryProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F3C2D0915B9F945008D894A /* GRKServiceQueryProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5FF1FF3815BF21FF00EF2CE4 /* GRKTokenStore.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F3C2D0B15B9F945008D894A /* GRKTokenStore.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5FF1FF3915BF21FF00EF2CE4 /* GRKTokenStoreUserDefaults.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F3C2D0D15B9F945008D894A /* GRKTokenStoreUserDefaults.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		D8C9E8D0199AEB2F00FF9CDD /* thumbnail_expand.png in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8CE199AEB2F00FF9CDD /* thumbnail_expand.png */; };
+		D8C9E8D1199AEB2F00FF9CDD /* thumbnail_expand@2X.png in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2X.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -801,6 +803,8 @@
 		5FEE8C1816FC3C55002C995B /* GRKFlickrSingleton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKFlickrSingleton.m; sourceTree = "<group>"; };
 		5FEE9DEB15DF6CC900C44501 /* GRKPicasaQueriesQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPicasaQueriesQueue.h; sourceTree = "<group>"; };
 		5FEE9DEC15DF6CC900C44501 /* GRKPicasaQueriesQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPicasaQueriesQueue.m; sourceTree = "<group>"; };
+		D8C9E8CE199AEB2F00FF9CDD /* thumbnail_expand.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = thumbnail_expand.png; sourceTree = "<group>"; };
+		D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2X.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "thumbnail_expand@2X.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1159,6 +1163,8 @@
 				5F52969716BAB63D007CA510 /* flickr.png */,
 				5F52969816BAB63D007CA510 /* instagram.png */,
 				5F52969A16BAB63D007CA510 /* picasa.png */,
+				D8C9E8CE199AEB2F00FF9CDD /* thumbnail_expand.png */,
+				D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2X.png */,
 				5F52969B16BAB63D007CA510 /* thumbnail_placeholder.png */,
 				5F52969C16BAB63D007CA510 /* thumbnail_placeholder@2X.png */,
 				5F8CC03116D918E800307678 /* thumbnail_selected.png */,
@@ -1895,7 +1901,7 @@
 			attributes = {
 				LastUpgradeCheck = 0500;
 			};
-			buildConfigurationList = 5F3C2B4415B9F7FC008D894A /* Build configuration list for PBXProject "GrabKit" */;
+			buildConfigurationList = 5F3C2B4415B9F7FC008D894A /* Build configuration list for PBXProject "grabKit" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -1938,6 +1944,7 @@
 				5F8B84CE16F9AD8300ADCC8D /* GRKPickerAlbumsList.xib in Resources */,
 				5F8B84CF16F9AD8300ADCC8D /* GRKPickerPhotosList.xib in Resources */,
 				5F654FAE16CA18A500991DE6 /* GRKPickerAlbumsListCell.xib in Resources */,
+				D8C9E8D1199AEB2F00FF9CDD /* thumbnail_expand@2X.png in Resources */,
 				5F654FAF16CA18AE00991DE6 /* GRKPickerCurrentUserView.xib in Resources */,
 				5F654FB016CA18AE00991DE6 /* GRKPickerLoadMoreCell.xib in Resources */,
 				5F990C3D1702E5FE00B89A7B /* GTMOAuth2ViewTouch.xib in Resources */,
@@ -1945,6 +1952,7 @@
 				5F8CC03616D918E800307678 /* thumbnail_selected@2x.png in Resources */,
 				5F8B84BE16F793C800ADCC8D /* GrabKitPicker.strings in Resources */,
 				5F990C371702DAC200B89A7B /* facebook.png in Resources */,
+				D8C9E8D0199AEB2F00FF9CDD /* thumbnail_expand.png in Resources */,
 				5F990C381702DAC200B89A7B /* flickr.png in Resources */,
 				5F990C391702DAC200B89A7B /* instagram.png in Resources */,
 				5F990C3A1702DAC200B89A7B /* picasa.png in Resources */,
@@ -2478,7 +2486,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5F3C2B4415B9F7FC008D894A /* Build configuration list for PBXProject "GrabKit" */ = {
+		5F3C2B4415B9F7FC008D894A /* Build configuration list for PBXProject "grabKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5F3C2B7515B9F7FC008D894A /* Debug */,

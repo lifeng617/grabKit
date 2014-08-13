@@ -95,6 +95,26 @@ NSUInteger kCellHeight = 75;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    CGSize screenSz = self.view.bounds.size;
+    _tipLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, screenSz.width, 40)];
+    _tipLabel.font = [UIFont systemFontOfSize:14];
+    _tipLabel.textAlignment = NSTextAlignmentCenter;
+    _tipLabel.textColor = [UIColor darkGrayColor];
+    
+    GRKPickerViewController *parent = [GRKPickerViewController sharedInstance];
+    if ([[parent selectedPhotos] count] == 0) {
+        if ([parent minimumSelectionAllowed] == 1) {
+            _tipLabel.text = @"Pick 1 photo for your card.";
+        } else {
+            _tipLabel.text = [NSString stringWithFormat:@"Pick %d photos for your card.", [parent minimumSelectionAllowed]];
+        }
+    } else {
+        _tipLabel.text = [NSString stringWithFormat:@"%d of %d photos selected.", [[parent selectedPhotos] count], [parent minimumSelectionAllowed]];
+    }
+    [self.view addSubview:_tipLabel];
+    
+    
 
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
     [flowLayout setItemSize:CGSizeMake(kCellWidth, kCellHeight)];
@@ -103,7 +123,8 @@ NSUInteger kCellHeight = 75;
     [flowLayout setSectionInset:UIEdgeInsetsMake(4, 4, 4, 4)];
 
     
-    _collectionView = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:flowLayout];
+    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 40, screenSz.width, screenSz.height - 40)
+                                         collectionViewLayout:flowLayout];
     _collectionView.delegate = self;
     _collectionView.dataSource = self;
     
@@ -259,13 +280,20 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
     
     // Update the right bar button from "cancel" to "done" or vice-versa, if needed, according to the count of selected photos
     
-    if ( [[[GRKPickerViewController sharedInstance] selectedPhotos] count] > 0 &&
+    NSUInteger minimumSeletion = [[GRKPickerViewController sharedInstance] minimumSelectionAllowed];
+    NSUInteger maximumSelection = [[GRKPickerViewController sharedInstance] maximumSelectionAllowed];
+    NSUInteger currentSelection = [[[GRKPickerViewController sharedInstance] selectedPhotos] count];
+    
+    _tipLabel.text = [NSString stringWithFormat:@"%lu of %lu photos selected.", (unsigned long)currentSelection, (unsigned long)minimumSeletion];
+    
+    
+    if ( currentSelection >= minimumSeletion && currentSelection <= maximumSelection &&
          (self.navigationItem.rightBarButtonItem == _cancelButton || self.navigationItem.rightBarButtonItem == nil ) ){
         
         self.navigationItem.rightBarButtonItem = _doneButton;
         
         
-    } else if ( [[[GRKPickerViewController sharedInstance] selectedPhotos] count] == 0 &&
+    } else if ( (currentSelection < minimumSeletion || currentSelection > maximumSelection) &&
          (self.navigationItem.rightBarButtonItem == _doneButton || self.navigationItem.rightBarButtonItem == nil ) ){
         
         self.navigationItem.rightBarButtonItem = _cancelButton;
@@ -573,9 +601,30 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
         return NO;
     }
     
+    NSUInteger maximumSelection = [GRKPickerViewController sharedInstance].maximumSelectionAllowed;
+    NSUInteger currentSelectin = [[[GRKPickerViewController sharedInstance] selectedPhotosIds] count];
+    if (currentSelectin >= maximumSelection) {
+        
+        NSString *title = @"More photos won’t fit!";
+        NSString *message;
+        
+        if (maximumSelection > 1) {
+            message = [NSString stringWithFormat:@"The layout you chose has room for %d photos. Please choose your favorite %d photos.", maximumSelection, maximumSelection];
+        } else {
+            message = @"The layout you chose has room for 1 photo. Please choose your favorite photo.";
+        }
+        [[[UIAlertView alloc] initWithTitle:title
+                                    message:message
+                                   delegate:nil
+                          cancelButtonTitle:nil
+                          otherButtonTitles:@"OK", nil] show];
+        
+        return NO;
+    }
+    
+    
     // if the photo is already loaded, then ask the Picker if it can select the photo or not
     return [[GRKPickerViewController sharedInstance] shouldSelectPhoto:selectedPhoto];
-    
 }
 
 

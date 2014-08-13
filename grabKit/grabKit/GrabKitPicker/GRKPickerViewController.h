@@ -112,6 +112,13 @@
 */
 @property (nonatomic ) BOOL keepsSelection;
 
+/** Additional fields for customization, default 1
+ */
+@property (nonatomic) NSUInteger maximumSelectionAllowed;
+
+/** Additional fields for customization, default 1
+ */
+@property (nonatomic) NSUInteger minimumSelectionAllowed;
 
 /** returns the singleton of GRKPickerViewController */
 +(GRKPickerViewController *) sharedInstance;
