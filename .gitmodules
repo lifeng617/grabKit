@@ -10,3 +10,6 @@
 [submodule "grabKit/grabKit/submodules/NVUIGradientButton"]
 	path = grabKit/grabKit/submodules/NVUIGradientButton
 	url = https://github.com/nverinaud/NVUIGradientButton
+[submodule "grabKit/grabKit/submodules/EGOCache"]
+	path = grabKit/grabKit/submodules/EGOCache
+	url = https://github.com/enormego/EGOCache.git
