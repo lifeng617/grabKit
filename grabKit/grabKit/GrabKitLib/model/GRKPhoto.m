@@ -190,6 +190,10 @@ NSString * const kGRKPhotoDatePropertyDateTaken = @"kGRKPhotoDatePropertyDateTak
 
 -(GRKImage*)originalImage;
 {
+    
+    if ([_images count] <= 1)
+        return [_images firstObject];
+    
     __block GRKImage * result = nil;
 	[_images indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
        

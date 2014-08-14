@@ -31,6 +31,8 @@
 #define GRK_INSTAGRAM_SERVICE 1
 //#define GRK_PICASA_SERVICE 1
 #define GRK_DEVICE_SERVICE 1
+#define GRK_DROPBOX_SERVICE 1
+
 
 
 // Constants

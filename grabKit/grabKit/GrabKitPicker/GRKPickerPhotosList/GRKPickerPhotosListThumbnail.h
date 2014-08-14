@@ -25,6 +25,13 @@
 #import <UIKit/UIKit.h>
 
 
+@class GRKPickerPhotosListThumbnail;
+@protocol GRKPickerPhotoListThumbailDelegate <NSObject>
+
+- (void)zoomPhotoListThumbnail:(GRKPickerPhotosListThumbnail *)cell;
+
+@end
+
 
 /* This class is not meant to be used as-is by third-party developers. The comments are here just for eventual needs of customisation .
  
@@ -40,8 +47,12 @@
     UIImageView * thumbnailImageView;
     
     UIImageView * selectedImageView;
+    
+    UIButton *expandButton;
 }
 
+@property (nonatomic) NSUInteger index;
+@property (nonatomic, weak) id<GRKPickerPhotoListThumbailDelegate> delegate;
 
 -(void)updateThumbnailWithImage:(UIImage*)image animated:(BOOL)animated;
 

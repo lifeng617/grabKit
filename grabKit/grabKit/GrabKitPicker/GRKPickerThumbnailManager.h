@@ -25,6 +25,13 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 
+
+#if DEBUG
+#define DEBUG_CACHE 1
+#else
+#define DEBUG_CACHE 0
+#endif
+
 /* GRKPickerThumbnailManagerCompleteBlock is a block performed once a thumbnail has been downloaded or retrieved from the cache.
  */
 typedef void (^GRKPickerThumbnailManagerCompleteBlock)(UIImage * thumbnail, BOOL retrievedFromCache);
@@ -53,11 +60,16 @@ typedef void (^GRKPickerThumbnailManagerErrorBlock)(NSError * error);
     
     
     NSMutableArray * thumbnailsQueue;
+    NSMutableArray * photosQueue;
     NSMutableArray * connections;
     
     #if DEBUG_CACHE
-    int cacheCount;
-    int cacheCostCount;
+    int thumbnailCacheCount;
+    int thumbnailCacheCostCount;
+    
+    int photoCacheCount;
+    int photoCacheCostCount;
+    
     #endif
 }
 
@@ -89,10 +101,24 @@ typedef void (^GRKPickerThumbnailManagerErrorBlock)(NSError * error);
          withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock
              andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock;
 
+/** Download the data at the given url, or retrieves it from cache if it has been previously cached.
+ Once the data is available, it is stored in the cache for the given size, and the completeBlock is performed.
+ 
+ @param thumbnailURL URL of the thumbnail to download
+ @param thumbnailSize dimension of the thumbnail to resize to, and to store in cache.
+ @param completeBlock block to perform with the thumbnail's data
+ @param errorBlock error block
+ */
+-(void) downloadPhotoAtURL:(NSURL*)photoURL
+             withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock
+                 andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock;
+
 
 /** Empties the downloads queue
 */
 -(void) removeAllURLsOfThumbnailsToDownload;
+
+-(void) removeAllURLsOfPhotosToDownload;
 
 /** Stops all the current download
  */

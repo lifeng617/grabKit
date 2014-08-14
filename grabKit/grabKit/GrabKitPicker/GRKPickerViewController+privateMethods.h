@@ -74,6 +74,7 @@
 
 
 /* Called when the user touches the "Done"/"Cancel" button of the picker. this method is also responsible for calling some delegate methods. */
+-(void)done;
 -(void)dismiss;
 
 @end

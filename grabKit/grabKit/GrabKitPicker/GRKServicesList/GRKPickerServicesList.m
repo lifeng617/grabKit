@@ -26,6 +26,7 @@
 #import "GRKPickerViewController+privateMethods.h"
 #import "GRKPickerServicesList.h"
 #import "GRKPickerAlbumsList.h"
+#import "GRKPickerCloudPhotosList.h"
 
 
 @implementation GRKPickerServicesList
@@ -84,6 +85,13 @@
                                  @"Picasa", @"title",
                                  nil];
         [services addObject:picasa];
+        #endif
+        
+        #if GRK_DROPBOX_SERVICE
+        NSDictionary * dropbox = [NSDictionary dictionaryWithObjectsAndKeys:@"GRKDropboxGrabber", @"class",
+                                    @"Dropbox", @"title",
+                                    nil];
+        [services addObject:dropbox];
         #endif
         
 
@@ -244,9 +252,19 @@
     }
     
     
-    GRKPickerAlbumsList * albumsList = [[GRKPickerAlbumsList alloc] initWithGrabber:grabber andServiceName:grabberServiceName];
-    [self.navigationController pushViewController:albumsList animated:YES];
+    UIViewController *albumsList;
     
+    if ([grabberServiceName isEqualToString:@"Dropbox"]) {
+        
+        albumsList = [[GRKPickerCloudPhotosList alloc] initWithGrabber:grabber andServiceName:grabberServiceName];
+        
+    } else {
+        
+        albumsList = [[GRKPickerAlbumsList alloc] initWithGrabber:grabber andServiceName:grabberServiceName];
+        
+    }
+    
+    [self.navigationController pushViewController:albumsList animated:YES];
     
 }
 

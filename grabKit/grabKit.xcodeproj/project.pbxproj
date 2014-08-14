@@ -33,8 +33,6 @@
 		5F5296B016BAB63D007CA510 /* GRKPickerAlbumsList.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F52968F16BAB63D007CA510 /* GRKPickerAlbumsList.m */; };
 		5F5296B116BAB63D007CA510 /* GRKPickerAlbumsListCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F52969016BAB63D007CA510 /* GRKPickerAlbumsListCell.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5F5296B316BAB63D007CA510 /* GRKPickerAlbumsListCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F52969116BAB63D007CA510 /* GRKPickerAlbumsListCell.m */; };
-		5F5296B516BAB63D007CA510 /* GRKPickerServicesList.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F52969316BAB63D007CA510 /* GRKPickerServicesList.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		5F5296B716BAB63D007CA510 /* GRKPickerServicesList.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F52969416BAB63D007CA510 /* GRKPickerServicesList.m */; };
 		5F654F6316C3A1F600991DE6 /* NVUIGradientButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F654F4716C3A1F600991DE6 /* NVUIGradientButton.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5F654F6516C3A1F600991DE6 /* NVUIGradientButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F654F4816C3A1F600991DE6 /* NVUIGradientButton.m */; };
 		5F654F7E16C3D70200991DE6 /* GRKPickerLoadMoreCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F654F7C16C3D70100991DE6 /* GRKPickerLoadMoreCell.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -392,6 +390,20 @@
 		5FF1FF3715BF21FF00EF2CE4 /* GRKServiceQueryProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F3C2D0915B9F945008D894A /* GRKServiceQueryProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5FF1FF3815BF21FF00EF2CE4 /* GRKTokenStore.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F3C2D0B15B9F945008D894A /* GRKTokenStore.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5FF1FF3915BF21FF00EF2CE4 /* GRKTokenStoreUserDefaults.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F3C2D0D15B9F945008D894A /* GRKTokenStoreUserDefaults.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C08466FF199BBA7D009C77ED /* dropbox.png in Resources */ = {isa = PBXBuildFile; fileRef = C08466FD199BBA51009C77ED /* dropbox.png */; };
+		C09795F6199C485500CC849D /* GRKPickerCloudPhotosList.h in Headers */ = {isa = PBXBuildFile; fileRef = C09795F3199C485500CC849D /* GRKPickerCloudPhotosList.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C09795F7199C485500CC849D /* GRKPickerCloudPhotosList.m in Sources */ = {isa = PBXBuildFile; fileRef = C09795F4199C485500CC849D /* GRKPickerCloudPhotosList.m */; };
+		C09795FB199C487E00CC849D /* GRKPickerServicesList.h in Headers */ = {isa = PBXBuildFile; fileRef = C09795F9199C487E00CC849D /* GRKPickerServicesList.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C09795FC199C487E00CC849D /* GRKPickerServicesList.m in Sources */ = {isa = PBXBuildFile; fileRef = C09795FA199C487E00CC849D /* GRKPickerServicesList.m */; };
+		C09795FD199C489300CC849D /* GRKPickerCloudPhotosList.xib in Resources */ = {isa = PBXBuildFile; fileRef = C09795F5199C485500CC849D /* GRKPickerCloudPhotosList.xib */; };
+		C0979606199C49CD00CC849D /* GRKPickerPhotoViewer.h in Headers */ = {isa = PBXBuildFile; fileRef = C0979604199C49CD00CC849D /* GRKPickerPhotoViewer.h */; };
+		C0979607199C49CD00CC849D /* GRKPickerPhotoViewer.m in Sources */ = {isa = PBXBuildFile; fileRef = C0979605199C49CD00CC849D /* GRKPickerPhotoViewer.m */; };
+		C0979609199C4A2700CC849D /* GRKPickerPhotoViewer.xib in Resources */ = {isa = PBXBuildFile; fileRef = C0979608199C4A2700CC849D /* GRKPickerPhotoViewer.xib */; };
+		C0EFCF64199AFD3200223359 /* GRKDropboxManager.h in Headers */ = {isa = PBXBuildFile; fileRef = C0EFCF62199AFD3200223359 /* GRKDropboxManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C0EFCF65199AFD3200223359 /* GRKDropboxManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C0EFCF63199AFD3200223359 /* GRKDropboxManager.m */; };
+		C0EFCF66199AFD3D00223359 /* GRKDropboxGrabber.m in Sources */ = {isa = PBXBuildFile; fileRef = C0EFCF60199AFADC00223359 /* GRKDropboxGrabber.m */; };
+		C0EFCF67199AFD4F00223359 /* GRKDropboxGrabber.h in Headers */ = {isa = PBXBuildFile; fileRef = C0EFCF5F199AFADC00223359 /* GRKDropboxGrabber.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C0EFCF69199AFDBD00223359 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0EFCF68199AFDBD00223359 /* DropboxSDK.framework */; };
 		D8C9E8D0199AEB2F00FF9CDD /* thumbnail_expand.png in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8CE199AEB2F00FF9CDD /* thumbnail_expand.png */; };
 		D8C9E8D1199AEB2F00FF9CDD /* thumbnail_expand@2X.png in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2X.png */; };
 		D8C9E8EA199AF32F00FF9CDD /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */; };
@@ -507,8 +519,6 @@
 		5F52969016BAB63D007CA510 /* GRKPickerAlbumsListCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPickerAlbumsListCell.h; sourceTree = "<group>"; };
 		5F52969116BAB63D007CA510 /* GRKPickerAlbumsListCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPickerAlbumsListCell.m; sourceTree = "<group>"; };
 		5F52969216BAB63D007CA510 /* GRKPickerAlbumsListCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = GRKPickerAlbumsListCell.xib; sourceTree = "<group>"; };
-		5F52969316BAB63D007CA510 /* GRKPickerServicesList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPickerServicesList.h; sourceTree = "<group>"; };
-		5F52969416BAB63D007CA510 /* GRKPickerServicesList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPickerServicesList.m; sourceTree = "<group>"; };
 		5F52969616BAB63D007CA510 /* facebook.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = facebook.png; sourceTree = "<group>"; };
 		5F52969716BAB63D007CA510 /* flickr.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flickr.png; sourceTree = "<group>"; };
 		5F52969816BAB63D007CA510 /* instagram.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = instagram.png; sourceTree = "<group>"; };
@@ -806,6 +816,20 @@
 		5FEE8C1816FC3C55002C995B /* GRKFlickrSingleton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKFlickrSingleton.m; sourceTree = "<group>"; };
 		5FEE9DEB15DF6CC900C44501 /* GRKPicasaQueriesQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPicasaQueriesQueue.h; sourceTree = "<group>"; };
 		5FEE9DEC15DF6CC900C44501 /* GRKPicasaQueriesQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPicasaQueriesQueue.m; sourceTree = "<group>"; };
+		C08466FD199BBA51009C77ED /* dropbox.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dropbox.png; sourceTree = "<group>"; };
+		C09795F3199C485500CC849D /* GRKPickerCloudPhotosList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPickerCloudPhotosList.h; sourceTree = "<group>"; };
+		C09795F4199C485500CC849D /* GRKPickerCloudPhotosList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPickerCloudPhotosList.m; sourceTree = "<group>"; };
+		C09795F5199C485500CC849D /* GRKPickerCloudPhotosList.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = GRKPickerCloudPhotosList.xib; sourceTree = "<group>"; };
+		C09795F9199C487E00CC849D /* GRKPickerServicesList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPickerServicesList.h; sourceTree = "<group>"; };
+		C09795FA199C487E00CC849D /* GRKPickerServicesList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPickerServicesList.m; sourceTree = "<group>"; };
+		C0979604199C49CD00CC849D /* GRKPickerPhotoViewer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPickerPhotoViewer.h; sourceTree = "<group>"; };
+		C0979605199C49CD00CC849D /* GRKPickerPhotoViewer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPickerPhotoViewer.m; sourceTree = "<group>"; };
+		C0979608199C4A2700CC849D /* GRKPickerPhotoViewer.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = GRKPickerPhotoViewer.xib; sourceTree = "<group>"; };
+		C0EFCF5F199AFADC00223359 /* GRKDropboxGrabber.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKDropboxGrabber.h; sourceTree = "<group>"; };
+		C0EFCF60199AFADC00223359 /* GRKDropboxGrabber.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKDropboxGrabber.m; sourceTree = "<group>"; };
+		C0EFCF62199AFD3200223359 /* GRKDropboxManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKDropboxManager.h; sourceTree = "<group>"; };
+		C0EFCF63199AFD3200223359 /* GRKDropboxManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKDropboxManager.m; sourceTree = "<group>"; };
+		C0EFCF68199AFDBD00223359 /* DropboxSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DropboxSDK.framework; path = ../../../Frameworks/DropboxSDK.framework; sourceTree = "<group>"; };
 		D8C9E8CE199AEB2F00FF9CDD /* thumbnail_expand.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = thumbnail_expand.png; sourceTree = "<group>"; };
 		D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2X.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "thumbnail_expand@2X.png"; sourceTree = "<group>"; };
 		D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FacebookSDK.framework; path = ../../../Frameworks/FacebookSDK.framework; sourceTree = "<group>"; };
@@ -854,6 +878,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0EFCF69199AFDBD00223359 /* DropboxSDK.framework in Frameworks */,
 				5FD3999815BF1E2B0063542C /* Foundation.framework in Frameworks */,
 				D8C9E8EA199AF32F00FF9CDD /* FacebookSDK.framework in Frameworks */,
 			);
@@ -887,6 +912,7 @@
 		5F3C2B4D15B9F7FC008D894A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C0EFCF68199AFDBD00223359 /* DropboxSDK.framework */,
 				D8C9E8EB199AF36400FF9CDD /* Resources */,
 				D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */,
 				5F990C471702F42200B89A7B /* Social.framework */,
@@ -1010,6 +1036,7 @@
 				5F3C2CED15B9F945008D894A /* GRKServiceGrabber.h */,
 				5F3C2CEE15B9F945008D894A /* GRKServiceGrabber.m */,
 				5F3C2CCE15B9F945008D894A /* deviceGrabber */,
+				C0EFCF5E199AFADC00223359 /* dropboxGrabber */,
 				5F3C2CD115B9F945008D894A /* facebookGrabber */,
 				5FEE8C0E16FC3C55002C995B /* flickrGrabber */,
 				5F3C2CEF15B9F945008D894A /* instagramGrabber */,
@@ -1103,6 +1130,9 @@
 		5F46D80916D4D87F0013CB3B /* GRKPickerPhotosList */ = {
 			isa = PBXGroup;
 			children = (
+				C09795F3199C485500CC849D /* GRKPickerCloudPhotosList.h */,
+				C09795F4199C485500CC849D /* GRKPickerCloudPhotosList.m */,
+				C09795F5199C485500CC849D /* GRKPickerCloudPhotosList.xib */,
 				5F46D80A16D4D87F0013CB3B /* GRKPickerPhotosList.h */,
 				5F46D80B16D4D87F0013CB3B /* GRKPickerPhotosList.m */,
 				5F46D80C16D4D87F0013CB3B /* GRKPickerPhotosList.xib */,
@@ -1129,10 +1159,10 @@
 				5FC2547D16E749AF007471D4 /* GRKPickerViewControllerDelegate.h */,
 				5F32E90816FD8A7C006340B7 /* GRKPickerViewController+privateMethods.h */,
 				5F32E90916FD8A7C006340B7 /* GRKPickerViewController+privateMethods.m */,
-				5F52969316BAB63D007CA510 /* GRKPickerServicesList.h */,
-				5F52969416BAB63D007CA510 /* GRKPickerServicesList.m */,
+				C09795F8199C487E00CC849D /* GRKServicesList */,
 				5F52968D16BAB63D007CA510 /* GRKPickerAlbumsList */,
 				5F46D80916D4D87F0013CB3B /* GRKPickerPhotosList */,
+				C0979603199C49CD00CC849D /* GRKImageViewer */,
 				5F654F8916CA14C400991DE6 /* GRKServiceGrabber+usernameAndProfilePicture */,
 				5F46D81D16D8A77D0013CB3B /* helpers */,
 				5F52968316BAB63D007CA510 /* GRKPickerThumbnailManager.h */,
@@ -1167,6 +1197,7 @@
 		5F52969516BAB63D007CA510 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				C08466FD199BBA51009C77ED /* dropbox.png */,
 				5F5DB41816C189F200C6C9E3 /* splashscreen4in.png */,
 				5F52969616BAB63D007CA510 /* facebook.png */,
 				5F52969716BAB63D007CA510 /* flickr.png */,
@@ -1645,6 +1676,37 @@
 			path = flickrGrabber;
 			sourceTree = "<group>";
 		};
+		C09795F8199C487E00CC849D /* GRKServicesList */ = {
+			isa = PBXGroup;
+			children = (
+				C09795F9199C487E00CC849D /* GRKPickerServicesList.h */,
+				C09795FA199C487E00CC849D /* GRKPickerServicesList.m */,
+			);
+			path = GRKServicesList;
+			sourceTree = "<group>";
+		};
+		C0979603199C49CD00CC849D /* GRKImageViewer */ = {
+			isa = PBXGroup;
+			children = (
+				C0979604199C49CD00CC849D /* GRKPickerPhotoViewer.h */,
+				C0979605199C49CD00CC849D /* GRKPickerPhotoViewer.m */,
+				C0979608199C4A2700CC849D /* GRKPickerPhotoViewer.xib */,
+			);
+			path = GRKImageViewer;
+			sourceTree = "<group>";
+		};
+		C0EFCF5E199AFADC00223359 /* dropboxGrabber */ = {
+			isa = PBXGroup;
+			children = (
+				C0EFCF62199AFD3200223359 /* GRKDropboxManager.h */,
+				C0EFCF63199AFD3200223359 /* GRKDropboxManager.m */,
+				C0EFCF5F199AFADC00223359 /* GRKDropboxGrabber.h */,
+				C0EFCF60199AFADC00223359 /* GRKDropboxGrabber.m */,
+			);
+			name = dropboxGrabber;
+			path = grabKit/GrabKitLib/serviceGrabbers/dropboxGrabber;
+			sourceTree = SOURCE_ROOT;
+		};
 		D8C9E8EB199AF36400FF9CDD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
@@ -1685,16 +1747,19 @@
 				5FF1FF2C15BF21FF00EF2CE4 /* GRKInstagramConnector.h in Headers */,
 				5FF1FF2D15BF21FF00EF2CE4 /* GRKInstagramGrabber.h in Headers */,
 				5FF1FF2E15BF21FF00EF2CE4 /* GRKInstagramQuery.h in Headers */,
+				C0EFCF64199AFD3200223359 /* GRKDropboxManager.h in Headers */,
 				5FF1FF2F15BF21FF00EF2CE4 /* GRKInstagramSingleton.h in Headers */,
 				5FF1FF3015BF21FF00EF2CE4 /* GRKPicasaConnector.h in Headers */,
 				5FF1FF3115BF21FF00EF2CE4 /* GRKPicasaGrabber.h in Headers */,
 				5FF1FF3215BF21FF00EF2CE4 /* GRKPicasaQuery.h in Headers */,
+				C09795FB199C487E00CC849D /* GRKPickerServicesList.h in Headers */,
 				5FF1FF3315BF21FF00EF2CE4 /* GRKPicasaSingleton.h in Headers */,
 				5FF1FF3415BF21FF00EF2CE4 /* GRKServiceConnectorProtocol.h in Headers */,
 				5FF1FF3515BF21FF00EF2CE4 /* GRKServiceGrabberConnectionProtocol.h in Headers */,
 				5FF1FF3615BF21FF00EF2CE4 /* GRKServiceGrabberProtocol.h in Headers */,
 				5FF1FF3715BF21FF00EF2CE4 /* GRKServiceQueryProtocol.h in Headers */,
 				5FF1FF3815BF21FF00EF2CE4 /* GRKTokenStore.h in Headers */,
+				C0EFCF67199AFD4F00223359 /* GRKDropboxGrabber.h in Headers */,
 				5FF1FF3915BF21FF00EF2CE4 /* GRKTokenStoreUserDefaults.h in Headers */,
 				5F28F80315CE733300E0E64D /* GRKFacebookBatchQuery.h in Headers */,
 				5FEE9DED15DF6CC900C44501 /* GRKPicasaQueriesQueue.h in Headers */,
@@ -1722,6 +1787,7 @@
 				5FB1365016ADAD2700BE500B /* GDataAtomPubControl.h in Headers */,
 				5FB1365316ADAD2700BE500B /* GDataBaseElements.h in Headers */,
 				5FB1365616ADAD2700BE500B /* GDataBatchID.h in Headers */,
+				C0979606199C49CD00CC849D /* GRKPickerPhotoViewer.h in Headers */,
 				5FB1365916ADAD2700BE500B /* GDataBatchInterrupted.h in Headers */,
 				5FB1365C16ADAD2700BE500B /* GDataBatchOperation.h in Headers */,
 				5FB1365F16ADAD2700BE500B /* GDataBatchStatus.h in Headers */,
@@ -1811,7 +1877,7 @@
 				5F5296A016BAB63D007CA510 /* GRKPickerThumbnailManager.h in Headers */,
 				5F5296AE16BAB63D007CA510 /* GRKPickerAlbumsList.h in Headers */,
 				5F5296B116BAB63D007CA510 /* GRKPickerAlbumsListCell.h in Headers */,
-				5F5296B516BAB63D007CA510 /* GRKPickerServicesList.h in Headers */,
+				C09795F6199C485500CC849D /* GRKPickerCloudPhotosList.h in Headers */,
 				5F654F6316C3A1F600991DE6 /* NVUIGradientButton.h in Headers */,
 				5F654F7E16C3D70200991DE6 /* GRKPickerLoadMoreCell.h in Headers */,
 				5F654F9816CA14D400991DE6 /* GRKFacebookGrabber+usernameAndProfilePicture.h in Headers */,
@@ -1963,12 +2029,15 @@
 				5F8B84CE16F9AD8300ADCC8D /* GRKPickerAlbumsList.xib in Resources */,
 				5F8B84CF16F9AD8300ADCC8D /* GRKPickerPhotosList.xib in Resources */,
 				5F654FAE16CA18A500991DE6 /* GRKPickerAlbumsListCell.xib in Resources */,
+				C09795FD199C489300CC849D /* GRKPickerCloudPhotosList.xib in Resources */,
 				D8C9E8D1199AEB2F00FF9CDD /* thumbnail_expand@2X.png in Resources */,
 				5F654FAF16CA18AE00991DE6 /* GRKPickerCurrentUserView.xib in Resources */,
 				5F654FB016CA18AE00991DE6 /* GRKPickerLoadMoreCell.xib in Resources */,
 				5F990C3D1702E5FE00B89A7B /* GTMOAuth2ViewTouch.xib in Resources */,
+				C0979609199C4A2700CC849D /* GRKPickerPhotoViewer.xib in Resources */,
 				5F8CC03416D918E800307678 /* thumbnail_selected.png in Resources */,
 				5F8CC03616D918E800307678 /* thumbnail_selected@2x.png in Resources */,
+				C08466FF199BBA7D009C77ED /* dropbox.png in Resources */,
 				5F8B84BE16F793C800ADCC8D /* GrabKitPicker.strings in Resources */,
 				5F990C371702DAC200B89A7B /* facebook.png in Resources */,
 				D8C9E8D0199AEB2F00FF9CDD /* thumbnail_expand.png in Resources */,
@@ -2078,6 +2147,7 @@
 				5FD399B315BF1EA90063542C /* GRKImage.m in Sources */,
 				5FD399B515BF1EA90063542C /* GRKPhoto.m in Sources */,
 				5FD399B715BF1EA90063542C /* GRKDeviceGrabber.m in Sources */,
+				C09795F7199C485500CC849D /* GRKPickerCloudPhotosList.m in Sources */,
 				5FD399B915BF1EA90063542C /* GRKFacebookConnector.m in Sources */,
 				5FD399BB15BF1EA90063542C /* GRKFacebookGrabber.m in Sources */,
 				5FD399BD15BF1EA90063542C /* GRKFacebookQuery.m in Sources */,
@@ -2095,6 +2165,7 @@
 				5FD399DD15BF1EA90063542C /* GRKPicasaSingleton.m in Sources */,
 				5FD399E315BF1EA90063542C /* GRKTokenStore.m in Sources */,
 				5FD399E515BF1EA90063542C /* GRKTokenStoreUserDefaults.m in Sources */,
+				C09795FC199C487E00CC849D /* GRKPickerServicesList.m in Sources */,
 				5F28F80515CE733300E0E64D /* GRKFacebookBatchQuery.m in Sources */,
 				5FEE9DEF15DF6CC900C44501 /* GRKPicasaQueriesQueue.m in Sources */,
 				5FB134E716AAA3CB00BE500B /* LFHTTPRequest.m in Sources */,
@@ -2111,6 +2182,7 @@
 				5FB1363A16ADAD2700BE500B /* GDataFeedACL.m in Sources */,
 				5FB1363D16ADAD2700BE500B /* GDataServiceACL.m in Sources */,
 				5FB1364016ADAD2700BE500B /* GDataEntryBase.m in Sources */,
+				C0EFCF66199AFD3D00223359 /* GRKDropboxGrabber.m in Sources */,
 				5FB1364316ADAD2700BE500B /* GDataFeedBase.m in Sources */,
 				5FB1364616ADAD2700BE500B /* GDataObject.m in Sources */,
 				5FB1364916ADAD2700BE500B /* GDataQuery.m in Sources */,
@@ -2133,6 +2205,7 @@
 				5FB1367D16ADAD2700BE500B /* GDataExtendedProperty.m in Sources */,
 				5FB1368016ADAD2700BE500B /* GDataFeedLink.m in Sources */,
 				5FB1368316ADAD2700BE500B /* GDataGenerator.m in Sources */,
+				C0979607199C49CD00CC849D /* GRKPickerPhotoViewer.m in Sources */,
 				5FB1368616ADAD2700BE500B /* GDataGeoPt.m in Sources */,
 				5FB1368916ADAD2700BE500B /* GDataIM.m in Sources */,
 				5FB1368C16ADAD2700BE500B /* GDataLink.m in Sources */,
@@ -2187,6 +2260,7 @@
 				5FC65D3B16ADB4A900FCA059 /* GDataEntryPhotoComment.m in Sources */,
 				5FC65D3E16ADB4A900FCA059 /* GDataEntryPhotoTag.m in Sources */,
 				5FC65D4116ADB4A900FCA059 /* GDataEntryPhotoUser.m in Sources */,
+				C0EFCF65199AFD3200223359 /* GRKDropboxManager.m in Sources */,
 				5FC65D4416ADB4A900FCA059 /* GDataEXIFTags.m in Sources */,
 				5FC65D4716ADB4A900FCA059 /* GDataFeedPhoto.m in Sources */,
 				5FC65D4A16ADB4A900FCA059 /* GDataFeedPhotoAlbum.m in Sources */,
@@ -2201,7 +2275,6 @@
 				5F5296A216BAB63D007CA510 /* GRKPickerThumbnailManager.m in Sources */,
 				5F5296B016BAB63D007CA510 /* GRKPickerAlbumsList.m in Sources */,
 				5F5296B316BAB63D007CA510 /* GRKPickerAlbumsListCell.m in Sources */,
-				5F5296B716BAB63D007CA510 /* GRKPickerServicesList.m in Sources */,
 				5F654F6516C3A1F600991DE6 /* NVUIGradientButton.m in Sources */,
 				5F654F8016C3D70200991DE6 /* GRKPickerLoadMoreCell.m in Sources */,
 				5F654F8516C8E1BA00991DE6 /* GRKErrorsConstants.m in Sources */,
@@ -2472,6 +2545,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					/Volumes/WORK/Work/Kevin/SimpleCards/Frameworks,
+					/Volumes/MacWork/Work/Order/oDesk/KevinMcCurdy/Repo/SimpleCards/Frameworks,
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "GrabKitLib/GrabKitLib-Prefix.pch";
@@ -2495,6 +2569,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					/Volumes/WORK/Work/Kevin/SimpleCards/Frameworks,
+					/Volumes/MacWork/Work/Order/oDesk/KevinMcCurdy/Repo/SimpleCards/Frameworks,
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "GrabKitLib/GrabKitLib-Prefix.pch";

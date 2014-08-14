@@ -22,10 +22,12 @@
  */
 
 #import "GRKPickerPhotosList.h"
+#import "GRKPickerPhotoViewer.h"
 #import "GRKPickerPhotosListThumbnail.h"
 #import "GRKPickerThumbnailManager.h"
 #import "GRKPickerViewController.h"
 #import "GRKPickerViewController+privateMethods.h"
+
 
 
 // How many photos the grabber can load at a time
@@ -34,7 +36,7 @@ NSUInteger kNumberOfPhotosPerPage = 32;
 NSUInteger kCellWidth = 75;
 NSUInteger kCellHeight = 75;
 
-@interface GRKPickerPhotosList()
+@interface GRKPickerPhotosList()<GRKPickerPhotoListThumbailDelegate>
     -(void) setState:(GRKPickerPhotosListState)newState;
     -(void) loadPage:(NSUInteger)pageIndex;
     -(void) markPageIndexAsLoading:(NSUInteger)pageIndex;
@@ -65,7 +67,7 @@ NSUInteger kCellHeight = 75;
         _indexesOfPagesToLoad = [NSMutableArray array];
         
         _doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(didTouchDoneButton)];
-        _cancelButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(didTouchDoneButton)];
+        _cancelButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(didTouchCancelButton)];
         
 
         // Sometimes, the grabbers return an erroneous number of photos for a given album.
@@ -304,6 +306,12 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
 
 -(void) didTouchDoneButton {
 
+    [[GRKPickerViewController sharedInstance] done];
+    
+}
+
+-(void) didTouchCancelButton {
+    
     [[GRKPickerViewController sharedInstance] dismiss];
     
 }
@@ -330,8 +338,6 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
     // If the view disappears while something is loading (i.e. after an INCREASE_OPERATIONS_COUNT),
     //  the corresponding DECREASE_OPERATIONS_COUNT is not called, and the activity indicator remains spinning...
     RESET_OPERATIONS_COUNT
-    
-    
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -443,10 +449,16 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
 
 -(GRKPhoto*) photoForCellAtIndexPath:(NSIndexPath*)indexPath {
     
+    return [self photoForCellAtIndex:indexPath.row];
+    
+}
+
+-(GRKPhoto*) photoForCellAtIndex:(NSUInteger)index {
+    
     /*
      As there is only one section in the collectionView, we can rely on the indexPath.row value without further calculations
-    */
-    NSArray * photos = [_album photosAtPageIndex:indexPath.row withNumberOfPhotosPerPage:1];
+     */
+    NSArray * photos = [_album photosAtPageIndex:index withNumberOfPhotosPerPage:1];
     if ( [photos count] > 0 ){
         
         id expectedPhoto = [photos objectAtIndex:0];
@@ -460,6 +472,20 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
     
 }
 
+- (void)zoomPhotoListThumbnail:(GRKPickerPhotosListThumbnail *)cell
+{
+    
+    NSUInteger index = cell.index;
+    
+    GRKPhoto *photo = [self photoForCellAtIndex:index];
+    
+    if ( photo ) {
+        
+        GRKPickerPhotoViewer * photoViewer = [[GRKPickerPhotoViewer alloc] initWithPhoto:photo];
+        
+        [self.navigationController pushViewController:photoViewer animated:YES];
+    }
+}
 
 #pragma mark - UICollectionViewDataSource methods
 
@@ -540,7 +566,8 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
     
     GRKPickerPhotosListThumbnail * cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"pickerPhotosCell" forIndexPath:indexPath];
     cell.backgroundColor = [UIColor whiteColor];
-    
+    cell.index = indexPath.row;
+    cell.delegate = self;
     
     GRKPhoto * photo = [self photoForCellAtIndexPath:indexPath];
     if ( photo != nil ) {

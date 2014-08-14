@@ -130,6 +130,8 @@
  */
 -(void)picker:(GRKPickerViewController*)picker didDismissWithSelectedPhotos:(NSArray*)selectedPhotos;
 
+-(void)pickerDidCancel:(GRKPickerViewController*)picker;
+
 
 
 /** This method is called when the GRKPickerViewController is displayed, and is about to show the list of services.

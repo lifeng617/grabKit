@@ -51,6 +51,9 @@
 - (NSString*)picasaClientId;
 - (NSString*)picasaClientSecret;
 
+// Dropbox
+- (NSString *)dropboxAppKey;
+- (NSString *)dropboxAppSecret;
 
 // Others
 

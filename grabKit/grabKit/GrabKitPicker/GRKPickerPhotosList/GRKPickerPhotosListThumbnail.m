@@ -74,6 +74,8 @@ static UIImage * thumbnailPlaceholderImage;
     // The imageView's frame is 1px smaller in every directions, in order to show the 1px-wide black border of the background image.
     CGRect thumbnailRect = CGRectMake(1, 1, self.bounds.size.width -2 , self.bounds.size.height -2 );
     thumbnailImageView = [[UIImageView alloc] initWithFrame:thumbnailRect];
+    thumbnailImageView.contentMode = UIViewContentModeScaleAspectFill;
+    thumbnailImageView.clipsToBounds = YES;
 //    [self addSubview:thumbnailImageView];
     [self.contentView addSubview:thumbnailImageView];
     
@@ -91,13 +93,17 @@ static UIImage * thumbnailPlaceholderImage;
     UIImage * expandIcon = [UIImage imageWithContentsOfFile:expandPath];
     CGFloat expandIconSize = 25;
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    [button addTarget:self action:@selector(onZoom:) forControlEvents:UIControlEventTouchUpInside];
     [button setImage:expandIcon forState:UIControlStateNormal];
     
     button.frame = CGRectMake(self.contentView.bounds.size.width - expandIconSize,
                               self.contentView.bounds.size.height - expandIconSize, expandIconSize, expandIconSize);
     button.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
+    button.alpha = 0;
     
     [self.contentView addSubview:button];
+    
+    expandButton = button;
 }
 
 
@@ -120,36 +126,44 @@ static UIImage * thumbnailPlaceholderImage;
     
     if ( thumbnailImageView.image == nil  &&  animated ){
         
-            thumbnailImageView.alpha = .0;
-            [thumbnailImageView setImage:image];
+        thumbnailImageView.alpha = .0;
+        expandButton.alpha = .0;
+        [thumbnailImageView setImage:image];
+    
+        [UIView animateWithDuration:0.33 animations:^{
+            
+            thumbnailImageView.alpha = 1.;
+            expandButton.alpha = self.delegate ? 1 : 0;
         
-            [UIView animateWithDuration:0.33 animations:^{
-                
-                thumbnailImageView.alpha = 1.;
+        } completion:^(BOOL finished) {
             
-            } completion:^(BOOL finished) {
-                
-                if ( selectedImageView.superview == nil ){
-                    [self.contentView addSubview:selectedImageView];
-                }
-                
-            }];
+            if ( selectedImageView.superview == nil ){
+                [self.contentView addSubview:selectedImageView];
+            }
             
+        }];
+        
     } else {
             
-            // UI updates must be done on the main thread
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [thumbnailImageView setImage:image];
-               
-                if ( selectedImageView.superview == nil ){
-                    [self.contentView addSubview:selectedImageView];
-                }
-            });
+        // UI updates must be done on the main thread
+        dispatch_async(dispatch_get_main_queue(), ^{
+            expandButton.alpha = self.delegate ? 1 : 0;
+            [thumbnailImageView setImage:image];
+            
+            if ( selectedImageView.superview == nil ){
+                [self.contentView addSubview:selectedImageView];
+            }
+        });
 
             
     }
     
     
+}
+
+-(void)onZoom:(id)sender
+{
+    [self.delegate zoomPhotoListThumbnail:self];
 }
 
 -(void) setSelected:(BOOL)selected {

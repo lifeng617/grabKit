@@ -26,6 +26,8 @@
 
 "GRK_ALBUMS_LIST_CONNECT_BUTTON" = "Login";
 
+"GRK_ALBUMS_LIST_RETRY_BUTTON" = "Retry";
+
 "GRK_ALBUMS_LIST_ERROR_RETRY" = "An error occured. Please retry.";
 
 "GRK_ALBUMS_LIST_HUD_LOADING" = "Loading ...";

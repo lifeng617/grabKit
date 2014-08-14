@@ -165,10 +165,7 @@
 }
 
 
-
-
--(void) dismiss {
-    
+-(void) done {
     
     if ( [self isPresentedInPopover] ){
         
@@ -209,6 +206,51 @@
         }];
         
     }
+    
+}
+
+-(void) dismiss {
+    
+    if ( [self isPresentedInPopover] ){
+        
+        [_pickerPresentingPopover dismissPopoverAnimated:YES];
+        
+        if ( self.pickerDelegate != nil && [self.pickerDelegate respondsToSelector:@selector(pickerDidCancel:)]){
+            
+            [(id<GRKPickerViewControllerDelegate>)self.pickerDelegate pickerDidCancel:self];
+            
+        }
+        
+        
+        if ( ! self.keepsSelection ){
+            
+            [_selectedPhotos removeAllObjects];
+            
+        }
+        
+        
+    } else {
+        
+        [self dismissViewControllerAnimated:YES completion:^{
+            
+            [self popToRootViewControllerAnimated:NO];
+            
+            if ( self.pickerDelegate != nil && [self.pickerDelegate respondsToSelector:@selector(pickerDidCancel:)]){
+                
+                [(id<GRKPickerViewControllerDelegate>)self.pickerDelegate pickerDidCancel:self];
+                
+            }
+            
+            if ( ! self.keepsSelection ){
+                
+                [_selectedPhotos removeAllObjects];
+                
+            }
+            
+        }];
+        
+    }
+    
     
 }
 
