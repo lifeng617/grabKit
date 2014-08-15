@@ -25,6 +25,47 @@
 #import <Foundation/Foundation.h>
 #import "GRKConfiguration.h"
 
+#ifndef GRKConstants_H
+#define GRKConstants_H
+
+
+typedef NS_ENUM(NSUInteger, GRKPickerAlbumsListState) {
+    GRKPickerAlbumsListStateInitial = 0,
+    
+    GRKPickerAlbumsListStateNeedToConnect,
+    GRKPickerAlbumsListStateConnecting,
+    GRKPickerAlbumsListStateConnected,
+    GRKPickerAlbumsListStateDidNotConnect,
+    GRKPickerAlbumsListStateConnectionFailed,
+    
+    GRKPickerAlbumsListStateGrabbing,
+    GRKPickerAlbumsListStateAlbumsGrabbed,
+    GRKPickerAlbumsListStateAllAlbumsGrabbed,
+    GRKPickerAlbumsListStateGrabbingFailed,
+    
+    GRKPickerAlbumsListStateDisconnecting,
+    GRKPickerAlbumsListStateDisconnected,
+    
+    GRKPickerAlbumsListStateError = 99
+};
+
+typedef NS_ENUM(NSUInteger, GRKPickerPhotosListState) {
+    GRKPickerPhotosListStateInitial = 0,
+    
+    GRKPickerPhotosListStateConnecting,
+    GRKPickerPhotosListStateConnected,
+    
+    GRKPickerPhotosListStateGrabbing,
+    GRKPickerPhotosListStatePhotosGrabbed,
+    GRKPickerPhotosListStateAllPhotosGrabbed,
+    GRKPickerPhotosListStateGrabbingFailed,
+    
+    GRKPickerPhotosListStateError = 99
+};
+
+#define kNumberOfAlbumsPerPage 8
+#define kMaximumRetriesCount 1
+
 #define GRKCONFIG [GRKConfiguration sharedInstance].configurator 
 
 
@@ -40,3 +81,5 @@ extern const NSString * defaultTokenStoreClassName;
 
 extern const NSUInteger kMaximumSimultaneousQueriesForFlickrQueriesQueue;
 extern const NSUInteger kMaximumSimultaneousQueriesForPicasaQueriesQueue;
+
+#endif

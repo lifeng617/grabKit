@@ -52,6 +52,8 @@
 /** BOOL value marking the image as original */ 
 @property (nonatomic, readonly) BOOL isOriginal;
 
+@property (nonatomic, strong) id image;
+
 
 /** @name Creating a GRKImage */
 

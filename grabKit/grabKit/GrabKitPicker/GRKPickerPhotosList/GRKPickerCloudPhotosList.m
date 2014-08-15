@@ -407,7 +407,7 @@
         return;
     
     
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(didTouchCancelButton)];
+    [self updateRightBarButtonItem];
     
     
     // If the grabber needs to connect
@@ -726,7 +726,7 @@
 	GRKPhoto * selectedPhoto =  [self photoForCellAtIndexPath:indexPath];
     
     // Only allow selection of items for already-loaded photos.
-    if ( selectedPhoto == nil ){
+    if ( selectedPhoto == nil || [selectedPhoto originalImage] == nil){
         return NO;
     }
     

@@ -36,4 +36,5 @@ typedef void (^GRKDropboxDownloadCompleteBlock)(UIImage * thumbnail);
 
 - (void) downloadPhotoAtURL:(NSURL *)photoURL withCompleteBlock:(GRKDropboxDownloadCompleteBlock)completeBlock;
 
+- (void) loadUsernameAndProfilePictureOfCurrentUserWithCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock andErrorBlock:(GRKErrorBlock)errorBlock;
 @end

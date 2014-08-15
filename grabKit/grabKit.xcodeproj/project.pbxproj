@@ -399,6 +399,17 @@
 		C0979606199C49CD00CC849D /* GRKPickerPhotoViewer.h in Headers */ = {isa = PBXBuildFile; fileRef = C0979604199C49CD00CC849D /* GRKPickerPhotoViewer.h */; };
 		C0979607199C49CD00CC849D /* GRKPickerPhotoViewer.m in Sources */ = {isa = PBXBuildFile; fileRef = C0979605199C49CD00CC849D /* GRKPickerPhotoViewer.m */; };
 		C0979609199C4A2700CC849D /* GRKPickerPhotoViewer.xib in Resources */ = {isa = PBXBuildFile; fileRef = C0979608199C4A2700CC849D /* GRKPickerPhotoViewer.xib */; };
+		C0979614199C690500CC849D /* EGOCache.h in Headers */ = {isa = PBXBuildFile; fileRef = C097960F199C690500CC849D /* EGOCache.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C0979615199C690500CC849D /* EGOCache.m in Sources */ = {isa = PBXBuildFile; fileRef = C0979610199C690500CC849D /* EGOCache.m */; };
+		C097961C199C9A7800CC849D /* NSString+MD5.h in Headers */ = {isa = PBXBuildFile; fileRef = C097961A199C9A7800CC849D /* NSString+MD5.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C097961D199C9A7800CC849D /* NSString+MD5.m in Sources */ = {isa = PBXBuildFile; fileRef = C097961B199C9A7800CC849D /* NSString+MD5.m */; };
+		C0979620199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.h in Headers */ = {isa = PBXBuildFile; fileRef = C097961E199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C0979621199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.m in Sources */ = {isa = PBXBuildFile; fileRef = C097961F199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.m */; };
+		C0979624199CA2D900CC849D /* GRKPickerServicesListRevised.h in Headers */ = {isa = PBXBuildFile; fileRef = C0979622199CA2D900CC849D /* GRKPickerServicesListRevised.h */; };
+		C0979625199CA2D900CC849D /* GRKPickerServicesListRevised.m in Sources */ = {isa = PBXBuildFile; fileRef = C0979623199CA2D900CC849D /* GRKPickerServicesListRevised.m */; };
+		C0979628199CACEE00CC849D /* GRKPickerServiceListCell.h in Headers */ = {isa = PBXBuildFile; fileRef = C0979626199CACEE00CC849D /* GRKPickerServiceListCell.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C0979629199CACEE00CC849D /* GRKPickerServiceListCell.m in Sources */ = {isa = PBXBuildFile; fileRef = C0979627199CACEE00CC849D /* GRKPickerServiceListCell.m */; };
+		C097962B199CAD0600CC849D /* GRKPickerServiceListCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = C097962A199CAD0600CC849D /* GRKPickerServiceListCell.xib */; };
 		C0EFCF64199AFD3200223359 /* GRKDropboxManager.h in Headers */ = {isa = PBXBuildFile; fileRef = C0EFCF62199AFD3200223359 /* GRKDropboxManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C0EFCF65199AFD3200223359 /* GRKDropboxManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C0EFCF63199AFD3200223359 /* GRKDropboxManager.m */; };
 		C0EFCF66199AFD3D00223359 /* GRKDropboxGrabber.m in Sources */ = {isa = PBXBuildFile; fileRef = C0EFCF60199AFADC00223359 /* GRKDropboxGrabber.m */; };
@@ -825,6 +836,17 @@
 		C0979604199C49CD00CC849D /* GRKPickerPhotoViewer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPickerPhotoViewer.h; sourceTree = "<group>"; };
 		C0979605199C49CD00CC849D /* GRKPickerPhotoViewer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPickerPhotoViewer.m; sourceTree = "<group>"; };
 		C0979608199C4A2700CC849D /* GRKPickerPhotoViewer.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = GRKPickerPhotoViewer.xib; sourceTree = "<group>"; };
+		C097960F199C690500CC849D /* EGOCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EGOCache.h; sourceTree = "<group>"; };
+		C0979610199C690500CC849D /* EGOCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EGOCache.m; sourceTree = "<group>"; };
+		C097961A199C9A7800CC849D /* NSString+MD5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSString+MD5.h"; path = "grabKit/GrabKitLib/helpers/NSString+MD5.h"; sourceTree = SOURCE_ROOT; };
+		C097961B199C9A7800CC849D /* NSString+MD5.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSString+MD5.m"; path = "grabKit/GrabKitLib/helpers/NSString+MD5.m"; sourceTree = SOURCE_ROOT; };
+		C097961E199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GRKDropboxGrabber+usernameAndProfilePicture.h"; sourceTree = "<group>"; };
+		C097961F199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GRKDropboxGrabber+usernameAndProfilePicture.m"; sourceTree = "<group>"; };
+		C0979622199CA2D900CC849D /* GRKPickerServicesListRevised.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPickerServicesListRevised.h; sourceTree = "<group>"; };
+		C0979623199CA2D900CC849D /* GRKPickerServicesListRevised.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPickerServicesListRevised.m; sourceTree = "<group>"; };
+		C0979626199CACEE00CC849D /* GRKPickerServiceListCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPickerServiceListCell.h; sourceTree = "<group>"; };
+		C0979627199CACEE00CC849D /* GRKPickerServiceListCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPickerServiceListCell.m; sourceTree = "<group>"; };
+		C097962A199CAD0600CC849D /* GRKPickerServiceListCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = GRKPickerServiceListCell.xib; sourceTree = "<group>"; };
 		C0EFCF5F199AFADC00223359 /* GRKDropboxGrabber.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKDropboxGrabber.h; sourceTree = "<group>"; };
 		C0EFCF60199AFADC00223359 /* GRKDropboxGrabber.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKDropboxGrabber.m; sourceTree = "<group>"; };
 		C0EFCF62199AFD3200223359 /* GRKDropboxManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKDropboxManager.h; sourceTree = "<group>"; };
@@ -1005,6 +1027,8 @@
 				5F3C2CC315B9F945008D894A /* NSMutableArray+setObjectAtPosition.m */,
 				5F3C2CC415B9F945008D894A /* NSString+date.h */,
 				5F3C2CC515B9F945008D894A /* NSString+date.m */,
+				C097961A199C9A7800CC849D /* NSString+MD5.h */,
+				C097961B199C9A7800CC849D /* NSString+MD5.m */,
 			);
 			path = helpers;
 			sourceTree = "<group>";
@@ -1236,6 +1260,8 @@
 				5F654F8F16CA14D300991DE6 /* GRKInstagramGrabber+usernameAndProfilePicture.m */,
 				5F654F9016CA14D300991DE6 /* GRKPicasaGrabber+usernameAndProfilePicture.h */,
 				5F654F9116CA14D300991DE6 /* GRKPicasaGrabber+usernameAndProfilePicture.m */,
+				C097961E199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.h */,
+				C097961F199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.m */,
 			);
 			path = "GRKServiceGrabber+usernameAndProfilePicture";
 			sourceTree = "<group>";
@@ -1243,6 +1269,7 @@
 		5FB1341516AAA3C900BE500B /* submodules */ = {
 			isa = PBXGroup;
 			children = (
+				C097960E199C690500CC849D /* EGOCache */,
 				5FD46C7F16B9001100EE496F /* MBProgressHUD */,
 				5F654F4016C3A1F600991DE6 /* NVUIGradientButton */,
 				5FB1357B16ADAD2700BE500B /* Picasa */,
@@ -1681,6 +1708,11 @@
 			children = (
 				C09795F9199C487E00CC849D /* GRKPickerServicesList.h */,
 				C09795FA199C487E00CC849D /* GRKPickerServicesList.m */,
+				C0979622199CA2D900CC849D /* GRKPickerServicesListRevised.h */,
+				C0979623199CA2D900CC849D /* GRKPickerServicesListRevised.m */,
+				C0979626199CACEE00CC849D /* GRKPickerServiceListCell.h */,
+				C0979627199CACEE00CC849D /* GRKPickerServiceListCell.m */,
+				C097962A199CAD0600CC849D /* GRKPickerServiceListCell.xib */,
 			);
 			path = GRKServicesList;
 			sourceTree = "<group>";
@@ -1694,6 +1726,16 @@
 			);
 			path = GRKImageViewer;
 			sourceTree = "<group>";
+		};
+		C097960E199C690500CC849D /* EGOCache */ = {
+			isa = PBXGroup;
+			children = (
+				C097960F199C690500CC849D /* EGOCache.h */,
+				C0979610199C690500CC849D /* EGOCache.m */,
+			);
+			name = EGOCache;
+			path = grabKit/submodules/EGOCache;
+			sourceTree = SOURCE_ROOT;
 		};
 		C0EFCF5E199AFADC00223359 /* dropboxGrabber */ = {
 			isa = PBXGroup;
@@ -1805,6 +1847,7 @@
 				5FB1368116ADAD2700BE500B /* GDataGenerator.h in Headers */,
 				5FB1368416ADAD2700BE500B /* GDataGeoPt.h in Headers */,
 				5FB1368716ADAD2700BE500B /* GDataIM.h in Headers */,
+				C0979628199CACEE00CC849D /* GRKPickerServiceListCell.h in Headers */,
 				5FB1368A16ADAD2700BE500B /* GDataLink.h in Headers */,
 				5FB1368D16ADAD2700BE500B /* GDataMoney.h in Headers */,
 				5FB1369016ADAD2700BE500B /* GDataName.h in Headers */,
@@ -1822,11 +1865,13 @@
 				5FB136B416ADAD2700BE500B /* GDataWho.h in Headers */,
 				5FB136B716ADAD2700BE500B /* GData.h in Headers */,
 				5FB136B816ADAD2700BE500B /* GDataDefines.h in Headers */,
+				C0979620199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.h in Headers */,
 				5FB136B916ADAD2700BE500B /* GDataFramework.h in Headers */,
 				5FB136BC16ADAD2700BE500B /* GDataTargetNamespace.h in Headers */,
 				5FB136BD16ADAD2700BE500B /* GDataUtilities.h in Headers */,
 				5FB136C016ADAD2700BE500B /* GDataGeo.h in Headers */,
 				5FB136C316ADAD2700BE500B /* GTMGatherInputStream.h in Headers */,
+				C0979614199C690500CC849D /* EGOCache.h in Headers */,
 				5FB136C616ADAD2700BE500B /* GTMHTTPFetcher.h in Headers */,
 				5FB136C916ADAD2700BE500B /* GTMHTTPFetcherLogging.h in Headers */,
 				5FB136CC16ADAD2700BE500B /* GTMHTTPFetcherService.h in Headers */,
@@ -1834,6 +1879,7 @@
 				5FB136D216ADAD2700BE500B /* GTMHTTPUploadFetcher.h in Headers */,
 				5FB136D516ADAD2700BE500B /* GTMMIMEDocument.h in Headers */,
 				5FB136D816ADAD2700BE500B /* GTMReadMonitorInputStream.h in Headers */,
+				C0979624199CA2D900CC849D /* GRKPickerServicesListRevised.h in Headers */,
 				5FB136DB16ADAD2700BE500B /* GDataAtomCategoryGroup.h in Headers */,
 				5FB136DE16ADAD2700BE500B /* GDataAtomCollection.h in Headers */,
 				5FB136E116ADAD2700BE500B /* GDataAtomServiceDocument.h in Headers */,
@@ -1866,6 +1912,7 @@
 				5FC65D4216ADB4A900FCA059 /* GDataEXIFTags.h in Headers */,
 				5FC65D4516ADB4A900FCA059 /* GDataFeedPhoto.h in Headers */,
 				5FC65D4816ADB4A900FCA059 /* GDataFeedPhotoAlbum.h in Headers */,
+				C097961C199C9A7800CC849D /* NSString+MD5.h in Headers */,
 				5FC65D4B16ADB4A900FCA059 /* GDataFeedPhotoBase.h in Headers */,
 				5FC65D4E16ADB4A900FCA059 /* GDataFeedPhotoUser.h in Headers */,
 				5FC65D5116ADB4A900FCA059 /* GDataPhotoConstants.h in Headers */,
@@ -2036,6 +2083,7 @@
 				5F990C3D1702E5FE00B89A7B /* GTMOAuth2ViewTouch.xib in Resources */,
 				C0979609199C4A2700CC849D /* GRKPickerPhotoViewer.xib in Resources */,
 				5F8CC03416D918E800307678 /* thumbnail_selected.png in Resources */,
+				C097962B199CAD0600CC849D /* GRKPickerServiceListCell.xib in Resources */,
 				5F8CC03616D918E800307678 /* thumbnail_selected@2x.png in Resources */,
 				C08466FF199BBA7D009C77ED /* dropbox.png in Resources */,
 				5F8B84BE16F793C800ADCC8D /* GrabKitPicker.strings in Resources */,
@@ -2185,10 +2233,12 @@
 				C0EFCF66199AFD3D00223359 /* GRKDropboxGrabber.m in Sources */,
 				5FB1364316ADAD2700BE500B /* GDataFeedBase.m in Sources */,
 				5FB1364616ADAD2700BE500B /* GDataObject.m in Sources */,
+				C097961D199C9A7800CC849D /* NSString+MD5.m in Sources */,
 				5FB1364916ADAD2700BE500B /* GDataQuery.m in Sources */,
 				5FB1364C16ADAD2700BE500B /* GDataServiceBase.m in Sources */,
 				5FB1364F16ADAD2700BE500B /* GDataServiceGoogle.m in Sources */,
 				5FB1365216ADAD2700BE500B /* GDataAtomPubControl.m in Sources */,
+				C0979621199C9E0F00CC849D /* GRKDropboxGrabber+usernameAndProfilePicture.m in Sources */,
 				5FB1365516ADAD2700BE500B /* GDataBaseElements.m in Sources */,
 				5FB1365816ADAD2700BE500B /* GDataBatchID.m in Sources */,
 				5FB1365B16ADAD2700BE500B /* GDataBatchInterrupted.m in Sources */,
@@ -2231,8 +2281,10 @@
 				5FB136CB16ADAD2700BE500B /* GTMHTTPFetcherLogging.m in Sources */,
 				5FB136CE16ADAD2700BE500B /* GTMHTTPFetcherService.m in Sources */,
 				5FB136D116ADAD2700BE500B /* GTMHTTPFetchHistory.m in Sources */,
+				C0979615199C690500CC849D /* EGOCache.m in Sources */,
 				5FB136D416ADAD2700BE500B /* GTMHTTPUploadFetcher.m in Sources */,
 				5FB136D716ADAD2700BE500B /* GTMMIMEDocument.m in Sources */,
+				C0979629199CACEE00CC849D /* GRKPickerServiceListCell.m in Sources */,
 				5FB136DA16ADAD2700BE500B /* GTMReadMonitorInputStream.m in Sources */,
 				5FB136DD16ADAD2700BE500B /* GDataAtomCategoryGroup.m in Sources */,
 				5FB136E016ADAD2700BE500B /* GDataAtomCollection.m in Sources */,
@@ -2295,6 +2347,7 @@
 				5FEE8C2116FC3C55002C995B /* GRKFlickrQueriesQueue.m in Sources */,
 				5FEE8C2416FC3C55002C995B /* GRKFlickrQuery.m in Sources */,
 				5FEE8C2716FC3C55002C995B /* GRKFlickrSingleton.m in Sources */,
+				C0979625199CA2D900CC849D /* GRKPickerServicesListRevised.m in Sources */,
 				5F32E90C16FD8A7D006340B7 /* GRKPickerViewController+privateMethods.m in Sources */,
 				5F990C2D1702D2A500B89A7B /* GRKPickerViewController.m in Sources */,
 			);

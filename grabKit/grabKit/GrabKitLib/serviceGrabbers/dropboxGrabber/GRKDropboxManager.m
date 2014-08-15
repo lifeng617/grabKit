@@ -7,8 +7,10 @@
 #import "GRKDropboxManager.h"
 #import "GRKConnectorsDispatcher.h"
 #import "GRKServiceGrabber.h"
+#import "GRKServiceGrabber+usernameAndProfilePicture.h"
 #import "GRKPickerThumbnailManager.h"
 #import <DropboxSDK/DropboxSDK.h>
+
 
 #define kThumbnailRequestMaxAge  5 // Max age of a request is 10 secs
 #define kPhotoRequestMaxAge  5 // Max age of a request is 10 secs
@@ -20,6 +22,9 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 {
     GRKServiceGrabberCompleteBlock _fetchPhotosCompleteBlock;
     GRKErrorBlock   _fetchPhotosErrorBlock;
+    
+    GRKServiceGrabberCompleteBlock _profileCompleteBlock;
+    GRKErrorBlock _profileErrorBlock;
 }
 
 @property (nonatomic, strong) DBRestClient *restClient;
@@ -55,6 +60,12 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
         connectionIsCompleteBlock = nil;
         connectionDidFailBlock = nil;
         
+        _fetchPhotosCompleteBlock = nil;
+        _fetchPhotosErrorBlock = nil;
+        
+        _profileCompleteBlock = nil;
+        _profileErrorBlock = nil;
+        
         _isConnecting = NO;
         
         self.thumbnailReqDictionary = [NSMutableDictionary dictionary];
@@ -67,16 +78,31 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     
     return self;
 }
+- (DBSession *) dropboxSession
+{
+    if ([DBSession sharedSession] == nil) {
+        DBSession *dbSession = [[DBSession alloc] initWithAppKey:[GRKCONFIG dropboxAppKey] appSecret:[GRKCONFIG dropboxAppSecret] root:kDBRootDropbox];
+        [DBSession setSharedSession:dbSession];
+    }
+    
+    return [DBSession sharedSession];
+}
+
+- (NSString *) userId
+{
+    NSString *res = [[[self dropboxSession] userIds] firstObject];
+    
+    return res ? res : @"unknown";
+}
 
 #pragma mark - Internal
 
 
-
 - (DBRestClient *)restClient
 {
-    if (!_restClient && [DBSession sharedSession]) {
+    if (!_restClient && [self dropboxSession]) {
         
-        _restClient = [[DBRestClient alloc] initWithSession:[DBSession sharedSession]];
+        _restClient = [[DBRestClient alloc] initWithSession:[self dropboxSession]];
         _restClient.delegate = self;
     }
     
@@ -123,7 +149,7 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 -(GRKPhoto *) photoWithRawPhoto:(DBMetadata*)rawPhoto;
 {
     
-    NSString *url = [NSString stringWithFormat:@"dropbox:/%@", [rawPhoto path]];
+    NSString *url = [NSString stringWithFormat:@"dropbox://%@%@", [self userId], [rawPhoto path]];
     NSString * photoId = [rawPhoto path];
     
 	// on Facebook, the "name" value of a photo is its caption
@@ -149,12 +175,9 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 -(void) connectWithConnectionIsCompleteBlock:(GRKGrabberConnectionIsCompleteBlock)completeBlock andErrorBlock:(GRKErrorBlock)errorBlock;
 {
     
-    if ([DBSession sharedSession] == nil) {
-        DBSession *dbSession = [[DBSession alloc] initWithAppKey:[GRKCONFIG dropboxAppKey] appSecret:[GRKCONFIG dropboxAppSecret] root:kDBRootDropbox];
-        [DBSession setSharedSession:dbSession];
-    }
     
-    DBSession *session = [DBSession sharedSession];
+    
+    DBSession *session = [self dropboxSession];
     
     if (! session.isLinked) {
         
@@ -186,9 +209,9 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 -(void)disconnectWithDisconnectionIsCompleteBlock:(GRKGrabberDisconnectionIsCompleteBlock)completeBlock andErrorBlock:(GRKErrorBlock)errorBlock;
 {
     [self cancelAll];
-    [[DBSession sharedSession] unlinkAll];
+    [[self dropboxSession] unlinkAll];
     
-    dispatch_async_on_main_queue(completeBlock, ![[DBSession sharedSession] isLinked]);
+    dispatch_async_on_main_queue(completeBlock, ![[self dropboxSession] isLinked]);
 }
 
 -(void) cancelAll {
@@ -206,9 +229,9 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 -(void) isConnected:(GRKGrabberConnectionIsCompleteBlock)connectedBlock errorBlock:(GRKErrorBlock)errorBlock;
 {
     
-    DBSession *session = [DBSession sharedSession];
-    BOOL connected = [session isLinked];
+    DBSession *session = [self dropboxSession];
     
+    BOOL connected = [session isLinked];
     
     dispatch_async_on_main_queue(connectedBlock, connected);
 }
@@ -260,14 +283,14 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 -(void) handleOpenURL:(NSURL*)url; 
 {
     
-    if ([[DBSession sharedSession] handleOpenURL:url]) {
+    if ([[self dropboxSession] handleOpenURL:url]) {
         
         [[GRKConnectorsDispatcher sharedInstance] unregisterServiceConnectorAsConnecting:self];
         
         if (_isConnecting)
             _isConnecting = NO;
         
-        BOOL connnected = [[DBSession sharedSession] isLinked];
+        BOOL connnected = [[self dropboxSession] isLinked];
         
         dispatch_async(dispatch_get_main_queue(), ^{
             connectionIsCompleteBlock(connnected);
@@ -279,12 +302,25 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 
 #pragma mark - Rest API Backend
 
+- (void) loadUsernameAndProfilePictureOfCurrentUserWithCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock andErrorBlock:(GRKErrorBlock)errorBlock
+{
+    
+    if ( [[self dropboxSession] isLinked] ) {
+        
+        _profileCompleteBlock = completeBlock;
+        _profileErrorBlock = errorBlock;
+        [self.restClient loadAccountInfo];
+    }
+    
+    
+}
+
 - (void) fetchAllPhotosWith:(GRKServiceGrabberCompleteBlock)completeBlock
               andErrorBlock:(GRKErrorBlock)errorBlock
 {
     
     
-    if ([[DBSession sharedSession] isLinked]) {
+    if ([[self dropboxSession] isLinked]) {
         
         _fetchPhotosCompleteBlock = completeBlock;
         _fetchPhotosErrorBlock = errorBlock;
@@ -304,9 +340,8 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 - (void) downloadPhotoAtURL:(NSURL *)photoURL withCompleteBlock:(GRKDropboxDownloadCompleteBlock)completeBlock
 {
     
-    NSString *path = [[photoURL absoluteString] stringByReplacingOccurrencesOfString:@"dropbox:/" withString:@""];
-    path = [path stringByReplacingOccurrencesOfString:@"//" withString:@"/"];
-    path = [path stringByRemovingPercentEncoding];
+    NSString *path = [[photoURL absoluteString] stringByReplacingOccurrencesOfString:@"dropbox://" withString:@""];
+    path = [[path substringFromIndex:[path rangeOfString:@"/"].location] stringByRemovingPercentEncoding];
     
     
     if ([self.restClient requestCount] < kMaxRequestCount) {
@@ -409,9 +444,8 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 - (void)downloadThumbnailAtURL:(NSURL*)thumbnailURL forThumbnailSize:(CGSize)thumbnailSize withCompleteBlock:(GRKDropboxDownloadCompleteBlock)completeBlock
 {
     
-    NSString *path = [[thumbnailURL absoluteString] stringByReplacingOccurrencesOfString:@"dropbox:/" withString:@""];
-    path = [path stringByReplacingOccurrencesOfString:@"//" withString:@"/"];
-    path = [path stringByRemovingPercentEncoding];
+    NSString *path = [[thumbnailURL absoluteString] stringByReplacingOccurrencesOfString:@"dropbox://" withString:@""];
+    path = [[path substringFromIndex:[path rangeOfString:@"/"].location] stringByRemovingPercentEncoding];
     
     
     if ([self.restClient requestCount] < kMaxRequestCount) {
@@ -510,6 +544,41 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 
 #pragma mark DBRestClient Delegate
 
+- (void)restClient:(DBRestClient*)client loadedAccountInfo:(DBAccountInfo*)info
+{
+    
+    if (_profileCompleteBlock != nil) {
+        
+        NSDictionary * blockResult = [NSDictionary dictionaryWithObjectsAndKeys:[info displayName], kGRKUsernameKey,
+                                      [info referralLink], kGRKProfilePictureKey,
+                                      nil];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            _profileCompleteBlock(blockResult);
+            _profileCompleteBlock = nil;
+        });
+    }
+    
+    _profileErrorBlock = nil;
+}
+
+- (void)restClient:(DBRestClient*)client loadAccountInfoFailedWithError:(NSError*)error
+{
+    
+    
+    if (_profileErrorBlock) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            _profileErrorBlock(error);
+            _profileErrorBlock = nil;
+        });
+    }
+    
+    _profileCompleteBlock = nil;
+    
+    _profileErrorBlock = nil;
+}
+
+
 - (void)restClient:(DBRestClient*)restClient loadedSearchResults:(NSArray*)results
            forPath:(NSString*)path keyword:(NSString*)keyword
 {
@@ -558,8 +627,13 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     
     if (_fetchPhotosErrorBlock) {
         
-        dispatch_async_on_main_queue(_fetchPhotosErrorBlock, error);
-        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            
+            _fetchPhotosErrorBlock(error);
+            
+            _fetchPhotosErrorBlock = nil;
+            
+        });
     }
     
 }

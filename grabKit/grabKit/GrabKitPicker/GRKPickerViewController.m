@@ -24,6 +24,7 @@
 
 #import "GRKPickerViewController.h"
 #import "GRKPickerViewController+privateMethods.h"
+#import "GRKPickerServicesListRevised.h"
 #import "GRKPickerServicesList.h"
 #import "GRKPickerAlbumsList.h"
 #import "GRKPickerPhotosList.h"
@@ -44,7 +45,8 @@ GRKPickerViewController * pickerViewControllerSharedInstance = nil;
     
     if ( pickerViewControllerSharedInstance == nil ){
         
-        GRKPickerServicesList * servicesList = [[GRKPickerServicesList alloc] init];
+//        GRKPickerServicesList * servicesList = [[GRKPickerServicesList alloc] init];
+        GRKPickerServicesListRevised *servicesList = [[GRKPickerServicesListRevised alloc] init];
 
         pickerViewControllerSharedInstance = [[GRKPickerViewController alloc] initWithRootViewController:servicesList];
         

@@ -32,6 +32,31 @@
 @synthesize canLoadPhotosPagesDiscontinuously = _canLoadPhotosPagesDiscontinuously;
 
 
++(NSMutableDictionary *)userIdCache
+{
+    static dispatch_once_t once;
+    static NSMutableDictionary *sharedUserIdCache;
+    
+    dispatch_once(&once, ^{
+        sharedUserIdCache = [[NSMutableDictionary alloc] init];
+    });
+    
+    return sharedUserIdCache;
+}
+
++(NSString *)cachedUserIdForService:(NSString *)serviceName
+{
+    return [[GRKServiceGrabber userIdCache] objectForKey:serviceName];
+}
++(void)cacheUserId:(NSString *)userId forService:(NSString *)serviceName
+{
+    [[GRKServiceGrabber userIdCache] setObject:userId forKey:serviceName];
+}
++ (void) removeCachedUserIdForService:(NSString *)serviceName
+{
+    [[GRKServiceGrabber userIdCache] removeObjectForKey:serviceName];
+}
+
 -(id) initWithServiceName:(NSString *)serviceName {
     
     if ((self = [super init]) != nil){

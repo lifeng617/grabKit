@@ -22,7 +22,8 @@
  */
 
 #import "GRKPickerViewController+privateMethods.h"
-
+#import "GRKPickerThumbnailManager.h"
+#import "MBProgressHUD.h"
 
 @implementation GRKPickerViewController (privateMethods)
 
@@ -164,49 +165,82 @@
     [self updateNetworkActivityIndicator];
 }
 
+-(void)showHUD {
+    
+    MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    hud.mode = MBProgressHUDModeIndeterminate;
+    
+    hud.labelText = GRK_i18n(@"GRK_ALBUMS_LIST_HUD_LOADING", @"Loading ...");
+    
+}
+
+-(void)hideHUD {
+    [MBProgressHUD  hideHUDForView:self.view animated:YES];
+    
+}
+
 
 -(void) done {
     
-    if ( [self isPresentedInPopover] ){
+    
+    __weak GRKPickerViewController *wself = self;
+    
+    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
+    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfPhotosToDownload];
+    [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
+    
+    [self showHUD];
+    
+    [self extractMediasFromSelectionWithCompletionHandler:^( void ) {
         
-        [_pickerPresentingPopover dismissPopoverAnimated:YES];
+        __strong GRKPickerViewController *sself = wself;
         
-        if ( self.pickerDelegate != nil && [self.pickerDelegate respondsToSelector:@selector(picker:didDismissWithSelectedPhotos:)]){
+        if ( !sself )
+            return;
+        
+        [sself hideHUD];
+        
+        if ( [sself isPresentedInPopover] ){
             
-            [(id<GRKPickerViewControllerDelegate>)self.pickerDelegate picker:self didDismissWithSelectedPhotos:[_selectedPhotos allValues]];
+            [_pickerPresentingPopover dismissPopoverAnimated:YES];
             
-        }
-        
-        
-        if ( ! self.keepsSelection ){
-            
-            [_selectedPhotos removeAllObjects];
-            
-        }
-        
-        
-    } else {
-        
-        [self dismissViewControllerAnimated:YES completion:^{
-            
-            [self popToRootViewControllerAnimated:NO];
-            
-            if ( self.pickerDelegate != nil && [self.pickerDelegate respondsToSelector:@selector(picker:didDismissWithSelectedPhotos:)]){
+            if ( sself.pickerDelegate != nil && [sself.pickerDelegate respondsToSelector:@selector(picker:didDismissWithSelectedPhotos:)]){
                 
-                [(id<GRKPickerViewControllerDelegate>)self.pickerDelegate picker:self didDismissWithSelectedPhotos:[_selectedPhotos allValues]];
+                [(id<GRKPickerViewControllerDelegate>)sself.pickerDelegate picker:sself didDismissWithSelectedPhotos:self.selectedPhotos];
                 
             }
             
-            if ( ! self.keepsSelection ){
+            
+            if ( ! sself.keepsSelection ){
                 
                 [_selectedPhotos removeAllObjects];
                 
             }
             
-        }];
+            
+        } else {
+            
+            [sself dismissViewControllerAnimated:YES completion:^{
+                
+                [sself popToRootViewControllerAnimated:NO];
+                
+                if ( sself.pickerDelegate != nil && [sself.pickerDelegate respondsToSelector:@selector(picker:didDismissWithSelectedPhotos:)]){
+                    
+                    [(id<GRKPickerViewControllerDelegate>)sself.pickerDelegate picker:self didDismissWithSelectedPhotos:self.selectedPhotos];
+                    
+                }
+                
+                if ( ! sself.keepsSelection ){
+                    
+                    [_selectedPhotos removeAllObjects];
+                    
+                }
+                
+            }];
+            
+        }
         
-    }
-    
+    }];
 }
 
 -(void) dismiss {
@@ -254,5 +288,57 @@
     
 }
 
+
+-(void) extractMediasFromSelectionWithCompletionHandler:(void (^) ())handler
+{
+    [self downloadMediaAtIndex:0 withCompletionHandler:handler];
+}
+
+-(void) downloadMediaAtIndex:(NSUInteger) index withCompletionHandler:(void (^) ())handler
+{
+    
+    while ( index < [self.selectedPhotos count] ) {
+        
+        GRKPhoto *photo = self.selectedPhotos[index];
+        GRKImage *image = [photo originalImage];
+        
+        if (image == nil) {
+            index ++;
+            continue;
+        }
+        
+        __weak GRKPickerViewController *wself = self;
+        
+        [[GRKPickerThumbnailManager sharedInstance] downloadPhotoAtURL:image.URL withCompleteBlock:^(UIImage *thumbnail, BOOL retrievedFromCache) {
+            
+            __strong GRKPickerViewController *sself = wself;
+            
+            if ( !sself )
+                return;
+            
+            image.image = thumbnail;
+            
+            [sself downloadMediaAtIndex:index + 1 withCompletionHandler:handler];
+            
+            
+        } andErrorBlock:^(NSError *error) {
+            
+            __strong GRKPickerViewController *sself = wself;
+            
+            if ( !sself )
+                return;
+            
+            [sself downloadMediaAtIndex:index + 1 withCompletionHandler:handler];
+            
+        }];
+        
+        return;
+        
+    }
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        handler();
+    });
+}
 
 @end

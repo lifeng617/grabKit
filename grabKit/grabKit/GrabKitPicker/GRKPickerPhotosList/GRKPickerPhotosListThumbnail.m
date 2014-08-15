@@ -113,6 +113,7 @@ static UIImage * thumbnailPlaceholderImage;
     [thumbnailImageView setImage:nil];
 //    [selectedImageView removeFromSuperview];
     selectedImageView.alpha = 0;
+    expandButton.alpha = 0;
 
     // Fix for issue #27 https://github.com/pierrotsmnrd/grabKit/issues/27
     self.selected = NO;

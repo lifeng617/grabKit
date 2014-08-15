@@ -24,22 +24,7 @@
 #import <UIKit/UIKit.h>
 #import "GRKServiceGrabber.h"
 #import "GRKAlbum.h"
-
-
-enum {
-    GRKPickerPhotosListStateInitial = 0,
-    
-    GRKPickerPhotosListStateConnecting,
-    GRKPickerPhotosListStateConnected,
-    
-    GRKPickerPhotosListStateGrabbing,
-    GRKPickerPhotosListStatePhotosGrabbed,
-    GRKPickerPhotosListStateAllPhotosGrabbed,
-    GRKPickerPhotosListStateGrabbingFailed,
-    
-    GRKPickerPhotosListStateError = 99
-};
-typedef NSUInteger GRKPickerPhotosListState;
+#import "GRKConstants.h"
 
 
 

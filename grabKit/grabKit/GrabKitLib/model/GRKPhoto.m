@@ -208,6 +208,17 @@ NSString * const kGRKPhotoDatePropertyDateTaken = @"kGRKPhotoDatePropertyDateTak
         return NO;
     }];
     
+    // if there was no 'original' image, we should take the largest one.
+    if (result == nil) {
+        
+        CGFloat maxWidth = 0;
+        for (GRKImage *image in _images) {
+            if (image.width > maxWidth) {
+                result = image;
+            }
+        }
+    }
+    
     return result;
 }
 

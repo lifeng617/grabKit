@@ -25,28 +25,7 @@
 #import "GRKServiceGrabber.h"
 #import "GRKPickerCurrentUserView.h"
 #import "GRKPickerLoadMoreCell.h"
-
-
-enum {
-    GRKPickerAlbumsListStateInitial = 0,
-    
-    GRKPickerAlbumsListStateNeedToConnect,
-    GRKPickerAlbumsListStateConnecting,
-    GRKPickerAlbumsListStateConnected,
-    GRKPickerAlbumsListStateDidNotConnect,
-    GRKPickerAlbumsListStateConnectionFailed,
-    
-    GRKPickerAlbumsListStateGrabbing,
-    GRKPickerAlbumsListStateAlbumsGrabbed,
-    GRKPickerAlbumsListStateAllAlbumsGrabbed,
-    GRKPickerAlbumsListStateGrabbingFailed,
-    
-    GRKPickerAlbumsListStateDisconnecting,
-    GRKPickerAlbumsListStateDisconnected,
-    
-    GRKPickerAlbumsListStateError = 99
-};
-typedef NSUInteger GRKPickerAlbumsListState;
+#import "GRKConstants.h"
 
 
 /* This class is not meant to be used as-is by third-party developers. The comments are here just for eventual needs of customisation .
@@ -69,7 +48,6 @@ typedef NSUInteger GRKPickerAlbumsListState;
 @interface GRKPickerAlbumsList : UIViewController <UITableViewDataSource, UITableViewDelegate, GRKPickerCurrentUserViewDelegate, GRKPickerLoadMoreCellDelegate> {
 
     IBOutlet UITableView * _tableView;
-    GRKPickerCurrentUserView * _headerView;
     UIView * _footer;
     
     IBOutlet UIView * _needToConnectView;

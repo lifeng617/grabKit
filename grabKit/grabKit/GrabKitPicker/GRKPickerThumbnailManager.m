@@ -30,8 +30,10 @@
 #import "GRKPickerViewController+privateMethods.h"
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "GrabKit.h"
+#import "NSString+MD5.h"
 
 #import "GRKDropboxManager.h"
+#import "EGOCache.h"
 
 @interface UIImage (FixOrientation)
 
@@ -63,7 +65,7 @@ NSString * errorBlockKey = @"errorBlock";
 
 // A global NSCache instance, used to store the downloaded thumbnails
 NSCache * sharedThumbnailCache = nil;
-NSCache * sharedPhotoCache = nil;
+EGOCache * sharedPhotoCache = nil;
 
 // Singleton of the current class
 GRKPickerThumbnailManager * sharedGRKPickerThumbnailManager = nil;
@@ -96,9 +98,6 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
         #if DEBUG_CACHE
         thumbnailCacheCount = 0;
         thumbnailCacheCostCount = 0;
-        
-        photoCacheCount = 0;
-        photoCacheCostCount = 0;
         #endif
         
         thumbnailsQueue = [[NSMutableArray alloc] init] ;
@@ -122,43 +121,28 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     return sharedThumbnailCache;
 }
 
-+(NSCache *) photoCache {
++(EGOCache *) photoCache {
     
-    if ( sharedPhotoCache == nil ) {
-        sharedPhotoCache = [[NSCache alloc] init];
-        sharedPhotoCache.totalCostLimit = 1024 * 1024 * 5;
-        
-        sharedPhotoCache.delegate = [GRKPickerThumbnailManager sharedInstance];
-    }
-    
-    return sharedPhotoCache;
+    return [EGOCache globalCache];
 }
 
 
 
 -(void) cacheThumbnail:(UIImage*)thumbnailImage forURL:(NSURL*)thumbnailURL andSize:(CGSize)size{
     
-    NSData * thumbnailData = UIImageJPEGRepresentation(thumbnailImage, 0);
-    
-    int thumbnailCost = [thumbnailData length];
-    
-    NSCache *cache;
-    
     if (CGSizeEqualToSize(size, CGSizeZero)) {
         
-        cache = [GRKPickerThumbnailManager photoCache];
+        EGOCache *cache = [GRKPickerThumbnailManager photoCache];
         
-        [cache setObject:thumbnailData forKey:[self cacheKeyForURL:thumbnailURL andSize:size] cost:thumbnailCost];
-        
-#if DEBUG_CACHE
-        photoCacheCount++;
-        photoCacheCostCount += thumbnailCost;
-        NSLog(@" thumbnail cache count : %d, cost : %d", thumbnailCacheCount, thumbnailCacheCostCount );
-#endif
+        [cache setImage:thumbnailImage forKey:[[thumbnailURL absoluteString] MD5String] withTimeoutInterval:3600];
         
     } else {
         
-        cache = [GRKPickerThumbnailManager thumbnailCache];
+        NSData * thumbnailData = UIImageJPEGRepresentation(thumbnailImage, 0);
+        
+        NSUInteger thumbnailCost = [thumbnailData length];
+        
+        NSCache *cache = [GRKPickerThumbnailManager thumbnailCache];
         [cache setObject:thumbnailData forKey:[self cacheKeyForURL:thumbnailURL andSize:size] cost:thumbnailCost];
         
 #if DEBUG_CACHE
@@ -181,20 +165,28 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     
     UIImage * cachedThumbnail = nil;
     
-    NSCache *cache;
+    ;
     
     if (CGSizeEqualToSize(thumbnailSize, CGSizeZero)) {
-        cache = [GRKPickerThumbnailManager photoCache];
+        
+        EGOCache *cache = [GRKPickerThumbnailManager photoCache];
+        
+        cachedThumbnail = [cache imageForKey:[[thumbnailURL absoluteString] MD5String]];
+        
     } else {
-        cache = [GRKPickerThumbnailManager thumbnailCache];
-    }
-    
-    NSData * cachedThumbnailData = [cache objectForKey:[self cacheKeyForURL:thumbnailURL andSize:thumbnailSize]];
-    if ( cachedThumbnailData != nil ){
-    
-        cachedThumbnail = [UIImage imageWithData:cachedThumbnailData];
+        
+        NSCache *cache = [GRKPickerThumbnailManager thumbnailCache];
+        
+        NSData * cachedThumbnailData = [cache objectForKey:[self cacheKeyForURL:thumbnailURL andSize:thumbnailSize]];
+        if ( cachedThumbnailData != nil ){
+            
+            cachedThumbnail = [UIImage imageWithData:cachedThumbnailData];
+            
+        }
         
     }
+    
+    
     
     return cachedThumbnail;
     
@@ -458,15 +450,6 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
         
         thumbnailCacheCount--;
         thumbnailCacheCostCount -= [(NSData*)obj length];
-        
-        NSLog(@" thumbnail cache count : %d, cost : %d", thumbnailCacheCount, thumbnailCacheCostCount );
-        
-    } else if (cache == [GRKPickerThumbnailManager photoCache]) {
-     
-        NSLog(@" will evict obj with length : %d", [(NSData*)obj length] );
-        
-        photoCacheCount--;
-        photoCacheCostCount -= [(NSData*)obj length];
         
         NSLog(@" thumbnail cache count : %d, cost : %d", thumbnailCacheCount, thumbnailCacheCostCount );
         

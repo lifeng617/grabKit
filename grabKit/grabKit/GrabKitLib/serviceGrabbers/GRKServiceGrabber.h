@@ -68,6 +68,9 @@ An instance of a GRKFacebookGrabber would return YES, an instance of a GRKDevice
  */
 -(id) initWithServiceName:(NSString *)serviceName;
 
++(NSString *)cachedUserIdForService:(NSString *)serviceName;
++(void)cacheUserId:(NSString *)userId forService:(NSString *)serviceName;
++(void)removeCachedUserIdForService:(NSString *)serviceName;
 
 /** @name  Managing queries */
 

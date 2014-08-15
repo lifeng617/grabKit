@@ -67,9 +67,6 @@ typedef void (^GRKPickerThumbnailManagerErrorBlock)(NSError * error);
     int thumbnailCacheCount;
     int thumbnailCacheCostCount;
     
-    int photoCacheCount;
-    int photoCacheCostCount;
-    
     #endif
 }
 

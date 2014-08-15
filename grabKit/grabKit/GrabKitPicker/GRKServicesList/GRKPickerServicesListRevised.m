@@ -1,32 +1,21 @@
-/*
- * This file is part of the GrabKit package.
- * Copyright (c) 2013 Pierre-Olivier Simonard <pierre.olivier.simonard@gmail.com>
- *  
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and 
- * associated documentation files (the "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
- * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the 
- * following conditions:
- *  
- * The above copyright notice and this permission notice shall be included in all copies or substantial 
- * portions of the Software.
- *  
- * The Software is provided "as is", without warranty of any kind, express or implied, including but not 
- * limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no
- * event shall the authors or copyright holders be liable for any claim, damages or other liability, whether
- * in an action of contract, tort or otherwise, arising from, out of or in connection with the Software or the 
- * use or other dealings in the Software.
- *
- * Except as contained in this notice, the name(s) of (the) Author shall not be used in advertising or otherwise
- * to promote the sale, use or other dealings in this Software without prior written authorization from (the )Author.
- */
+//
+//  GRKPickerServicesListRevised.m
+//  grabKit
+//
+//  Created by dragon on 8/14/14.
+//
+//
 
+#import "GrabKit.h"
 #import "GRKPickerViewController.h"
 #import "GRKPickerViewController+privateMethods.h"
-#import "GRKPickerAlbumsList.h"
+#import "GRKPickerServicesListRevised.h"
 #import "GRKServiceGrabberConnectionProtocol.h"
+#import "GRKPickerAlbumsList.h"
+#import "GRKPickerCloudPhotosList.h"
 #import "GRKPickerPhotosList.h"
 #import "GRKPickerAlbumsListCell.h"
+#import "GRKPickerServiceListCell.h"
 
 #import "MBProgressHUD.h"
 
@@ -43,45 +32,77 @@
 
 static NSString *loadMoreCellIdentifier = @"loadMoreCell";
 
-@interface GRKPickerAlbumsList()
-    -(void)loadMoreAlbums;
-    -(void)setState:(GRKPickerAlbumsListState)newState;
-    -(void)showHUD;
-    -(void)hideHUD;
+@interface GRKPickerServicesListRevised()<GRKPickerServiceListCellDelegate>
+-(void)loadMoreAlbums;
+-(void)setState:(GRKPickerAlbumsListState)newState;
+-(void)showHUD;
+-(void)hideHUD;
 @end
 
 
+@implementation GRKPickerServicesListRevised
 
-
-@implementation GRKPickerAlbumsList
-
-@synthesize tableView = _tableView;
-@synthesize serviceName = _serviceName;
 
 -(void) dealloc {
     
     for( GRKAlbum * album in _albums ){
         [album removeObserver:self forKeyPath:@"count"];
     }
-
+    
 }
 
-
--(id) initWithGrabber:(id)grabber andServiceName:(NSString *)serviceName{
+-(id) initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     
-    
-    self = [super initWithNibName:@"GRKPickerAlbumsList" bundle:GRK_BUNDLE];
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if ( self ){
         
-   
-        _grabber = grabber;
-        _serviceName = serviceName;
+        // build the array of services
+        services = [NSMutableArray array];
+        
+        
+        // build a dictionary per service
+#if GRK_FACEBOOK_SERVICE
+        NSDictionary * facebook = [NSDictionary dictionaryWithObjectsAndKeys:@"GRKFacebookGrabber", @"class",
+                                   @"Facebook", @"title",
+                                   nil];
+        [services addObject:facebook];
+#endif
+        
+#if GRK_FLICKR_SERVICE
+        NSDictionary * flickr = [NSDictionary dictionaryWithObjectsAndKeys:@"GRKFlickrGrabber", @"class",
+                                 @"FlickR", @"title",
+                                 nil];
+        [services addObject:flickr];
+#endif
+        
+#if GRK_INSTAGRAM_SERVICE
+        NSDictionary * instagram = [NSDictionary dictionaryWithObjectsAndKeys:@"GRKInstagramGrabber", @"class",
+                                    @"Instagram", @"title",
+                                    nil];
+        [services addObject:instagram];
+#endif
+        
+#if GRK_PICASA_SERVICE
+        NSDictionary * picasa = [NSDictionary dictionaryWithObjectsAndKeys:@"GRKPicasaGrabber", @"class",
+                                 @"Picasa", @"title",
+                                 nil];
+        [services addObject:picasa];
+#endif
+        
+#if GRK_DROPBOX_SERVICE
+        NSDictionary * dropbox = [NSDictionary dictionaryWithObjectsAndKeys:@"GRKDropboxGrabber", @"class",
+                                  @"Dropbox", @"title",
+                                  nil];
+        [services addObject:dropbox];
+#endif
+        
+        _grabber = [[GRKDeviceGrabber alloc] init];
         _albums = [[NSMutableArray alloc] init];
         _lastLoadedPageIndex = 0;
         allAlbumsGrabbed = NO;
         [self setState:GRKPickerAlbumsListStateInitial];
+        
     }
-    
     
     return self;
 }
@@ -101,37 +122,19 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         case GRKPickerAlbumsListStateConnecting:
         {
             
-            _needToConnectView.hidden = YES;
+            [self showHUD];
             
-            if ( [MBProgressHUD HUDForView:self.view] == nil ){
-                [self showHUD];
-                
-            }
-         
             INCREASE_OPERATIONS_COUNT
         }
             break;
-           
+            
             
         case GRKPickerAlbumsListStateNeedToConnect:
         {
             
             DECREASE_OPERATIONS_COUNT
             
-            _needToConnectView.alpha = 0;
-            _needToConnectView.hidden = NO;
-
-            NSString * needToConnectString = GRK_i18n(@"GRK_ALBUMS_LIST_NEED_TO_CONNECT", @"You need to connect to %serviceName%");
-            _needToConnectLabel.text = [needToConnectString stringByReplacingOccurrencesOfString:@"%serviceName%" withString:_grabber.serviceName];
-
-            [_connectButton setTitle:GRK_i18n(@"GRK_ALBUMS_LIST_CONNECT_BUTTON",@"Login") forState:UIControlStateNormal];
-            
-            [UIView animateWithDuration:0.33 animations:^{
-
-                _needToConnectView.alpha = 1;
-                [self hideHUD];
-                
-            }];
+            [self hideHUD];
             
             
         }
@@ -153,23 +156,13 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
             
         }
             break;
-
+            
         case GRKPickerAlbumsListStateConnectionFailed:
         {
             
             DECREASE_OPERATIONS_COUNT
             
-            _needToConnectView.alpha = 0;
-            _needToConnectView.hidden = NO;
-            
-            _needToConnectLabel.text = GRK_i18n(@"GRK_ALBUMS_LIST_ERROR_RETRY", @"An error occured. Please try again.");
-            
-            [UIView animateWithDuration:0.33 animations:^{
-                
-                _needToConnectView.alpha = 1;
-                [self hideHUD];
-                
-            }];
+            [self hideHUD];
             
             
         }
@@ -190,11 +183,11 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         }
             
             break;
-
             
-        // When some albums are grabbed, reload the tableView    
+            
+            // When some albums are grabbed, reload the tableView
         case GRKPickerAlbumsListStateAlbumsGrabbed:
-        case GRKPickerAlbumsListStateAllAlbumsGrabbed:    
+        case GRKPickerAlbumsListStateAllAlbumsGrabbed:
         {
             DECREASE_OPERATIONS_COUNT
             
@@ -219,26 +212,21 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
                 
             }
             
-            // If all the albums have been grabbed, show a nice footer
-            if ( state == GRKPickerAlbumsListStateAllAlbumsGrabbed ){
-                [self buildOrUpdateFooterView];
-            }
-            
             [self.tableView reloadData];
             
             
         }
             break;
-        
+            
         case GRKPickerAlbumsListStateGrabbingFailed:
         {
             DECREASE_OPERATIONS_COUNT
             
             NSIndexPath * loadMoreCellIndexPath = [NSIndexPath indexPathForRow:[_albums count] inSection:0];
-            UITableViewCell * loadMoreCell = [_tableView cellForRowAtIndexPath:loadMoreCellIndexPath];
+            UITableViewCell * loadMoreCell = [self.tableView cellForRowAtIndexPath:loadMoreCellIndexPath];
             
             if ( [loadMoreCell isKindOfClass:[GRKPickerLoadMoreCell class]] ){
-            
+                
                 [(GRKPickerLoadMoreCell*)loadMoreCell setToRetry];
             }
             
@@ -250,7 +238,7 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         case GRKPickerAlbumsListStateDisconnecting:
         {
             INCREASE_OPERATIONS_COUNT
-
+            
             [self showHUD];
             
         }
@@ -259,12 +247,12 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
             
         case GRKPickerAlbumsListStateDisconnected:
         {
-             DECREASE_OPERATIONS_COUNT
+            DECREASE_OPERATIONS_COUNT
             
-             [self hideHUD];
+            [self hideHUD];
             
-             [self.navigationController popToRootViewControllerAnimated:YES];
-         
+            [self.navigationController popToRootViewControllerAnimated:YES];
+            
         }
             break;
             
@@ -274,7 +262,7 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
             DECREASE_OPERATIONS_COUNT
             
             [self hideHUD];
-
+            
         }
             break;
             
@@ -289,7 +277,7 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     
     MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
     hud.mode = MBProgressHUDModeIndeterminate;
-
+    
     hud.labelText = GRK_i18n(@"GRK_ALBUMS_LIST_HUD_LOADING", @"Loading ...");
     
 }
@@ -299,68 +287,8 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     
 }
 
--(void) buildOrUpdateFooterView {
-    
-    if ( _footer == nil ){
-        _footer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, 80)];
-        
-    }
-    
-    
-    NSString * stringAllLoaded = GRK_i18n(@"GRK_ALBUMS_LIST_ALL_ALBUMS_LOADED", @"All albums loaded");
-    
-    UIFont * fontAllLoaded = [UIFont fontWithName:@"Helvetica" size:14];
-    
-    CGSize expectedSize = [stringAllLoaded sizeWithFont:fontAllLoaded
-                                      constrainedToSize:_footer.frame.size
-                                          lineBreakMode:NSLineBreakByTruncatingTail];
-    
-    CGFloat labelX = (_footer.frame.size.width - expectedSize.width) / 2;
-    CGFloat labelY = (_footer.frame.size.height - expectedSize.height) / 2;
-    
-    UILabel * labelAllLoaded = [[UILabel alloc] initWithFrame:CGRectMake( labelX, labelY, expectedSize.width, expectedSize.height)];
-    labelAllLoaded.text = stringAllLoaded;
-    labelAllLoaded.font = fontAllLoaded;
-    labelAllLoaded.textColor = [UIColor blackColor];
-    
-    [_footer addSubview:labelAllLoaded];
-    
-    self.tableView.tableFooterView = _footer;
-    
-}
 
-
-#pragma mark GRKPickerCurrentUserViewDelegate methods
-
--(void) headerViewDidTouchLogoutButton:(id)headerView {
-    
-    
-    [self setState:GRKPickerAlbumsListStateDisconnecting];
-    
-    // First, cancel all the running queries
-    [_grabber cancelAllWithCompleteBlock:^(NSArray *results) {
-        
-            [(GRKServiceGrabber<GRKServiceGrabberConnectionProtocol> *)_grabber disconnectWithDisconnectionIsCompleteBlock:^(BOOL disconnected) {
-            
-            [self setState:GRKPickerAlbumsListStateDisconnected];
-            
-        } andErrorBlock:^(NSError *error) {
-            
-            NSLog(@" An error occured trying to disconnect the grabber %@", _grabber);
-            NSLog(@" error : %@", error);
-           
-            // set to disconnected anyway, to fail silently
-            [self setState:GRKPickerAlbumsListStateDisconnected];
-
-            
-        }];
-        
-    }];
-
-    
-}
-
-#pragma mark GRKPickerLoadMoreCellDelegate 
+#pragma mark GRKPickerLoadMoreCellDelegate
 
 -(void)cellDidReceiveTouchOnLoadMoreButton:(GRKPickerLoadMoreCell *)cell {
     
@@ -385,7 +313,8 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     
 }
 
--(void) connectToService {
+-(IBAction)didTouchConnectButton {
+    
     
     [self setState:GRKPickerAlbumsListStateConnecting];
     
@@ -414,40 +343,8 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         
         
     }];
-}
-
--(IBAction)didTouchConnectButton {
     
     
-    [(id<GRKServiceGrabberConnectionProtocol>)_grabber isConnected:^(BOOL connected) {
-        
-        if ( ! connected ){
-            
-            [self connectToService];
-            
-        } else {
-            
-            dispatch_async(dispatch_get_main_queue(), ^(void){
-                
-                [self setState:GRKPickerAlbumsListStateConnected];
-                // start grabbing albums
-                [self loadMoreAlbums];
-                
-            });
-            
-        }
-        
-    } errorBlock:^(NSError *error) {
-        
-        NSLog(@" an error occured trying to check if the grabber is connected : %@", error);
-        
-        dispatch_async(dispatch_get_main_queue(), ^(void){
-            
-            [self setState:GRKPickerAlbumsListStateConnectionFailed];
-            
-        });
-        
-    }];
     
 }
 
@@ -466,16 +363,9 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
 - (void)viewDidLoad
 {
     [super viewDidLoad];
- 
+    
     self.tableView.rowHeight = 80.0;
- 
-}
-
-- (void)viewDidUnload
-{
-    [super viewDidUnload];
-    // Release any retained subviews of the main view.
-    // e.g. self.myOutlet = nil;
+    
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -486,13 +376,13 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     // Let's add some inset to the tableView to avoid this
     // Nevertheless, we don't need to do it when the picker is in a popover, because the navigationBar is not visible
     if ( ! [[GRKPickerViewController sharedInstance] isPresentedInPopover] && self.navigationController.navigationBar.translucent ){
-
+        
         self.tableView.contentInset = UIEdgeInsetsMake(self.navigationController.navigationBar.frame.size.height, 0, 0, 0);
         
     }
-
     
     
+    [self.tableView reloadData];
 }
 
 
@@ -501,7 +391,6 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
 {
     [super viewDidAppear:animated];
     
-    self.title = _serviceName;
     
     if ( state != GRKPickerAlbumsListStateInitial )
         return;
@@ -512,6 +401,7 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     
     [self setState:GRKPickerAlbumsListStateConnecting];
     
+    
     // If the grabber needs to connect
     if ( _grabber.requiresConnection ){
         
@@ -519,19 +409,18 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         [(id<GRKServiceGrabberConnectionProtocol>)_grabber isConnected:^(BOOL connected) {
             
             if ( ! connected ){
+                [self setState:GRKPickerAlbumsListStateNeedToConnect];
                 
-                [self connectToService];
-            
             } else {
-
+                
                 dispatch_async(dispatch_get_main_queue(), ^(void){
-
+                    
                     [self setState:GRKPickerAlbumsListStateConnected];
                     // start grabbing albums
-                    [self loadMoreAlbums];   
-
+                    [self loadMoreAlbums];
+                    
                 });
-
+                
             }
             
         } errorBlock:^(NSError *error) {
@@ -541,24 +430,24 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
             dispatch_async(dispatch_get_main_queue(), ^(void){
                 
                 [self setState:GRKPickerAlbumsListStateConnectionFailed];
-            
+                
             });
             
         }];
-                
+        
     } else {
         
         dispatch_async(dispatch_get_main_queue(), ^(void){
             
             [self setState:GRKPickerAlbumsListStateConnected];
             // start grabbing albums ( we don't need to add the "log out" button, as the grabber doesn't need to connect ...)
-            [self loadMoreAlbums];   
+            [self loadMoreAlbums];
             
         });
-
+        
     }
     
-
+    
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -566,7 +455,7 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     [super viewWillDisappear:animated];
     
     [_grabber cancelAll];
-
+    
     // Reset the operations count.
     // If the view disappears while something is (i.e. after a INCREASE_OPERATIONS_COUNT),
     //  the corresponding DECREASE_OPERATIONS_COUNT is not called, and the activity indicator remains spinning...
@@ -591,22 +480,22 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     [super willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
     
     /* If the navigation bar is not translucent, then we don't need to animate anything during rotation
-    If you don't understand why :
-    _ comment the test below
-    _ go to GRKPickerViewController.m 
-    _ set the navigationBar.translucent to NO,
-    _ Build and run the Demo app, select a service, and wait for the albums list to load
-    _ Now, rotate from portrait to landscape, and scroll ...
-    */
+     If you don't understand why :
+     _ comment the test below
+     _ go to GRKPickerViewController.m
+     _ set the navigationBar.translucent to NO,
+     _ Build and run the Demo app, select a service, and wait for the albums list to load
+     _ Now, rotate from portrait to landscape, and scroll ...
+     */
     if ( [[GRKPickerViewController sharedInstance] isPresentedInPopover] || ! self.navigationController.navigationBar.translucent ){
         return;
     }
     
     /* In order to have a beautiful rotation effect, we want :
-        _ That the space reserved for the header view fits the header view ( i.e. update the tableView's contentInset to the navigationBar's height )
-        _ If the tableView is scrolled at the top BEFORE the rotation begins, we want it to still be scrolled at the top AFTER the rotation.
-
-    */
+     _ That the space reserved for the header view fits the header view ( i.e. update the tableView's contentInset to the navigationBar's height )
+     _ If the tableView is scrolled at the top BEFORE the rotation begins, we want it to still be scrolled at the top AFTER the rotation.
+     
+     */
     
     CGFloat top; // The top value of the content inset
     BOOL shouldScrollToTop = NO;
@@ -638,10 +527,10 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
 }
 
 -(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
-   
+    
     // retrieve the loadMoreCell to update it
     NSIndexPath * loadMoreCellIndexPath = [NSIndexPath indexPathForRow:[_albums count] inSection:0];
-    UITableViewCell * loadMoreCell = [_tableView cellForRowAtIndexPath:loadMoreCellIndexPath];
+    UITableViewCell * loadMoreCell = [self.tableView cellForRowAtIndexPath:loadMoreCellIndexPath];
     
     
     if ( [loadMoreCell isKindOfClass:[GRKPickerLoadMoreCell class]] ){
@@ -688,8 +577,8 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     if ( thumbnailURL == nil ){
         thumbnailURL = ((GRKImage*)[imagesSortedByHeight lastObject]).URL;
     }
-     
-        
+    
+    
     // Try to retreive the thumbnail from the cache first ...
     UIImage * cachedThumbnail = [[GRKPickerThumbnailManager sharedInstance] cachedThumbnailForURL:thumbnailURL andSize:CGSizeMake(minWidth, minHeight)];
     
@@ -737,31 +626,96 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     
 }
 
+- (GRKServiceGrabber *)grabberForService:(NSDictionary *)service
+{
+    NSString * grabberClassName = [service objectForKey:@"class"];
+    
+    
+    Class grabberClass = NSClassFromString(grabberClassName);
+    
+    id grabber = nil;
+    @try {
+        grabber = [[grabberClass alloc] init];
+    }
+    @catch (NSException *exception) {
+        
+        NSLog(@" exception : %@", exception);
+    }
+    
+    return grabber;
+}
 
+- (void)logoutForServiceListCell:(GRKPickerServiceListCell *)cell
+{
+    
+    NSUInteger index = cell.index;
+    GRKServiceGrabber *grabber = [self grabberForService:services[index]];
+    
+    
+    __weak GRKPickerServicesListRevised *wself = self;
+    
+    [self showHUD];
+    
+    [grabber cancelAllWithCompleteBlock:^(NSArray *results) {
+        
+        [(GRKServiceGrabber<GRKServiceGrabberConnectionProtocol> *)grabber disconnectWithDisconnectionIsCompleteBlock:^(BOOL disconnected) {
+            
+            [GRKServiceGrabber removeCachedUserIdForService:grabber.serviceName];
+            
+            __strong GRKPickerServicesListRevised *sself = wself;
+            
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:1];
+            [sself.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+            [sself hideHUD];
+            
+        } andErrorBlock:^(NSError *error) {
+            
+            [GRKServiceGrabber removeCachedUserIdForService:grabber.serviceName];
+            
+            __strong GRKPickerServicesListRevised *sself = wself;
+            
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:index inSection:1];
+            [sself.tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationNone];
+            [sself hideHUD];
+        }];
+        
+    }];
+    
+}
 
 #pragma mark - Table view data source
 
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+    if (section == 0)
+        return @"";
+    else
+        return @"Social Media";
+}
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     // Return the number of sections.
-    return 1;
+    return 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-
-    NSUInteger res = [_albums count];
+    
+    if (section == 0) {
         
-    // If some albums have been grabbed, show an extra cell for "N albums - Load More"
-    if ( state == GRKPickerAlbumsListStateAlbumsGrabbed ) res++;
+        NSUInteger res = [_albums count];
+        
+        // If some albums have been grabbed, show an extra cell for "N albums - Load More"
+        if ( state == GRKPickerAlbumsListStateAlbumsGrabbed ) res++;
+        
+        // If all albums have been grabbed, show an extra cell for "N Albums"
+        //  if ( state == GRKPickerAlbumsListStateAllAlbumsGrabbed ) res++;
+        
+        return res;
+    }
     
-    // If all albums have been grabbed, show an extra cell for "N Albums"
-  //  if ( state == GRKPickerAlbumsListStateAllAlbumsGrabbed ) res++;
-    
-    return res;
-
-    
+    return [services count];
     
 }
 
@@ -772,47 +726,81 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     
     UITableViewCell *cell = nil;
     
-    // Handle the extra cell
-    if ( indexPath.row >= [_albums count] ){
-    
-        if ( ! allAlbumsGrabbed ){
-
-            cell = [tableView dequeueReusableCellWithIdentifier:loadMoreCellIdentifier];
-            cell = [[GRK_BUNDLE loadNibNamed:@"GRKPickerLoadMoreCell" owner:nil options:nil] objectAtIndex:0];
-            ((GRKPickerLoadMoreCell*)cell).delegate = self;
-            [(GRKPickerLoadMoreCell*)cell setToLoadMore];
+    if (indexPath.section == 0) {
+        
+        // Device's Albums
+        
+        // Handle the extra cell
+        if ( indexPath.row >= [_albums count] ){
             
-            cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        }
-        
-    } else {
-        
-        static NSString *CellIdentifier = @"AlbumCell";
-        
-        cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-        if (cell == nil) {
-            
-            cell = [[GRK_BUNDLE loadNibNamed:@"GRKPickerAlbumsListCell" owner:nil options:nil] objectAtIndex:0];
-        }
-        
-        GRKAlbum * albumAtIndexPath = (GRKAlbum*)[_albums objectAtIndex:indexPath.row];
-
-        [self prepareCell:(GRKPickerAlbumsListCell*)cell fromTableView:tableView atIndexPath:indexPath withAlbum:albumAtIndexPath];
-        
-        if ( albumAtIndexPath.count > 0 ){
-            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-            cell.selectionStyle = UITableViewCellSelectionStyleGray;
+            if ( ! allAlbumsGrabbed ){
+                
+                cell = [tableView dequeueReusableCellWithIdentifier:loadMoreCellIdentifier];
+                cell = [[GRK_BUNDLE loadNibNamed:@"GRKPickerLoadMoreCell" owner:nil options:nil] objectAtIndex:0];
+                ((GRKPickerLoadMoreCell*)cell).delegate = self;
+                [(GRKPickerLoadMoreCell*)cell setToLoadMore];
+                
+                cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            }
             
         } else {
-            cell.accessoryType = UITableViewCellAccessoryNone;
-            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            
+            static NSString *CellIdentifier = @"AlbumCell";
+            
+            cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+            if (cell == nil) {
+                
+                cell = [[GRK_BUNDLE loadNibNamed:@"GRKPickerAlbumsListCell" owner:nil options:nil] objectAtIndex:0];
+            }
+            
+            GRKAlbum * albumAtIndexPath = (GRKAlbum*)[_albums objectAtIndex:indexPath.row];
+            
+            [self prepareCell:(GRKPickerAlbumsListCell*)cell fromTableView:tableView atIndexPath:indexPath withAlbum:albumAtIndexPath];
+            
+            if ( albumAtIndexPath.count > 0 ){
+                cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+                cell.selectionStyle = UITableViewCellSelectionStyleGray;
+                
+            } else {
+                cell.accessoryType = UITableViewCellAccessoryNone;
+                cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            }
+            
+            
+            
         }
         
-        
+        cell.selected = NO;
         
     }
-
-    cell.selected = NO;
+    else
+    {
+        static NSString *CellIdentifier = @"ServiceCell";
+        
+        GRKPickerServiceListCell *serviceCell;
+        
+        serviceCell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+        if (serviceCell == nil) {
+            serviceCell = [[GRK_BUNDLE loadNibNamed:@"GRKPickerServiceListCell" owner:nil options:nil] objectAtIndex:0];
+        }
+        
+        NSDictionary *service = services[indexPath.row];
+        NSString *serviceName = [service objectForKey:@"title"];
+        NSString * path = [GRK_BUNDLE pathForResource:[serviceName lowercaseString] ofType:@"png"];
+        
+        NSString *cachedUserId = [GRKServiceGrabber cachedUserIdForService:serviceName];
+        
+        serviceCell.titleLabel.text = cachedUserId ? cachedUserId : serviceName;
+        serviceCell.imgView.image = [UIImage imageWithContentsOfFile:path];
+        serviceCell.delegate = self;
+        serviceCell.index = indexPath.row;
+        serviceCell.logoutButton.hidden = cachedUserId == nil;
+        
+        [serviceCell loadUserProfileWithGrabber:[self grabberForService:service]];
+        
+        cell = serviceCell;
+    }
+    
     
     return cell;
 }
@@ -828,24 +816,61 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    
     [[tableView cellForRowAtIndexPath:indexPath] setSelected:NO];
-
-    if ( indexPath.row <= [_albums count] -1 ) {
+    
+    if (indexPath.section == 0) {
         
-        GRKAlbum * albumAtIndexPath = [_albums objectAtIndex:indexPath.row];
-        
-        if ( albumAtIndexPath.count  > 0 ){
-        
-            GRKPickerPhotosList * photosList = [[GRKPickerPhotosList alloc] initWithNibName:@"GRKPickerPhotosList" bundle:GRK_BUNDLE andGrabber:_grabber andAlbum:albumAtIndexPath];
-            [self.navigationController pushViewController:photosList animated:YES];
+        if ( indexPath.row <= [_albums count] -1 ) {
+            
+            GRKAlbum * albumAtIndexPath = [_albums objectAtIndex:indexPath.row];
+            
+            if ( albumAtIndexPath.count  > 0 ){
+                
+                GRKPickerPhotosList * photosList = [[GRKPickerPhotosList alloc] initWithNibName:@"GRKPickerPhotosList" bundle:GRK_BUNDLE andGrabber:_grabber andAlbum:albumAtIndexPath];
+                [self.navigationController pushViewController:photosList animated:YES];
+            }
+            
         }
         
     }
-
+    else
+    {
+        
+        GRKServiceGrabber *grabber = [self grabberForService:[services objectAtIndex:indexPath.row]];
+        
+        if ( grabber == nil ){
+            
+            
+            NSString * grabberNotAvailableMessage = [NSString stringWithFormat:@"The grabber class %@ doesn't exist.", grabber];
+            UIAlertView * grabberNotAvailableAlertView = [[UIAlertView alloc] initWithTitle:@"Error" message:grabberNotAvailableMessage delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil] ;
+            
+            [grabberNotAvailableAlertView show];
+            
+            return;
+        }
+        
+        
+        UIViewController *albumsList;
+        
+        if ([grabber.serviceName isEqualToString:@"Dropbox"]) {
+            
+            albumsList = [[GRKPickerCloudPhotosList alloc] initWithGrabber:grabber andServiceName:grabber.serviceName];
+            
+        } else {
+            
+            albumsList = [[GRKPickerAlbumsList alloc] initWithGrabber:grabber andServiceName:grabber.serviceName];
+            
+        }
+        
+        [self.navigationController pushViewController:albumsList animated:YES];
+    }
+    
+    
 }
 
 
-#pragma mark - 
+#pragma mark -
 
 
 -(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
@@ -854,11 +879,11 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     if ( [keyPath isEqualToString:@"count"] ){
         
         NSInteger indexOfAlbum = [_albums indexOfObject:object];
-
+        
         if ( indexOfAlbum != NSNotFound ){
             
             NSArray * indexPathsToReload = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:indexOfAlbum inSection:0]];
-            [self.tableView reloadRowsAtIndexPaths:indexPathsToReload withRowAnimation:UITableViewRowAnimationNone];    
+            [self.tableView reloadRowsAtIndexPaths:indexPathsToReload withRowAnimation:UITableViewRowAnimationNone];
         }
         
     }
@@ -874,13 +899,13 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
             [albumsWithoutCover addObject:album];
         }
     }
-
+    
     
     INCREASE_OPERATIONS_COUNT
     
     // Fill these albums with their cover photo
     [_grabber fillCoverPhotoOfAlbums:albumsWithoutCover withCompleteBlock:^(id result) {
-
+        
         
         DECREASE_OPERATIONS_COUNT
         
@@ -889,7 +914,7 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
             // Do no reload rows during a grab of data. 2 reloads on the tableView could generate a crash
             return;
         }
-            
+        
         
         // for each album filled, find its index in the _albums array, and build an NSIndexPath to reload the tableView
         
@@ -921,9 +946,10 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
 
 
 -(void) loadMoreAlbums {
-
+    
     if ( state == GRKPickerAlbumsListStateGrabbing)
         return;
+    
     
     [self loadAlbumsAtPageIndex:_lastLoadedPageIndex withNumberOfAlbumsPerPage:kNumberOfAlbumsPerPage andNumberOfAllowedRetries:kMaximumRetriesCount];
     
@@ -946,7 +972,7 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
                                     [newAlbum addObserver:self forKeyPath:@"count" options:NSKeyValueObservingOptionNew context:nil];
                                     
                                 }
-                              
+                                
                                 dispatch_async(dispatch_get_main_queue(), ^{
                                     [self loadCoverPhotoForAlbums:results];
                                 });
@@ -973,15 +999,13 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
                                     return;
                                     
                                 } else {
-                                
+                                    
                                     [self setState:GRKPickerAlbumsListStateGrabbingFailed];
-                                
+                                    
                                 }
                                 
                             }];
     
 }
-
-
 
 @end

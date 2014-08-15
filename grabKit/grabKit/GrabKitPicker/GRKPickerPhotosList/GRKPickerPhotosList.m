@@ -624,7 +624,7 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
 	GRKPhoto * selectedPhoto =  [self photoForCellAtIndexPath:indexPath];
     
     // Only allow selection of items for already-loaded photos.
-    if ( selectedPhoto == nil ){
+    if ( selectedPhoto == nil  || [selectedPhoto originalImage] == nil){
         return NO;
     }
     

@@ -116,6 +116,7 @@
     [super viewDidLoad];
     
     self.navigationItem.title = GRK_i18n(@"GRK_SERVICES_LIST_TITLE", @"Network");
+    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStyleBordered target:nil action:nil];
 
     self.tableView.rowHeight = 54;
     
