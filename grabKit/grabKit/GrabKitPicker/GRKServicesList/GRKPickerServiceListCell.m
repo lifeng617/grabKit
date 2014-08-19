@@ -50,16 +50,24 @@
             
             [grabber loadUsernameAndProfilePictureOfCurrentUserWithCompleteBlock:^(id result) {
                 
-                
                 __strong GRKPickerServiceListCell *sself = wself;
+                
+                NSString *userId = [result objectForKey:kGRKUsernameKey];
+                
+                if (grabber) {
+                    
+                    [GRKServiceGrabber setConnectionState:GRKServiceStateConnected
+                                                andUserId:userId
+                                               forService:grabber.serviceName];
+                    
+                }
                 
                 if (sself && sself.index == index) {
                     
-                    NSString *userId = [result objectForKey:kGRKUsernameKey];
-                    [GRKServiceGrabber cacheUserId:userId forService:grabber.serviceName];
-                    
                     sself.titleLabel.text = userId;
+                    
                     sself.logoutButton.hidden = NO;
+                    
                 }
                 
             } andErrorBlock:^(NSError *error) {
@@ -76,9 +84,17 @@
             
             __strong GRKPickerServiceListCell *sself = wself;
             
+            if (grabber) {
+                
+                [GRKServiceGrabber setConnectionState:GRKServiceStateDisconnected
+                                            andUserId:nil
+                                           forService:grabber.serviceName];
+                
+            }
+            
+            
             if (sself && sself.index == index) {
                 sself.logoutButton.hidden = YES;
-                [GRKServiceGrabber removeCachedUserIdForService:grabber.serviceName];
             }
         }
         

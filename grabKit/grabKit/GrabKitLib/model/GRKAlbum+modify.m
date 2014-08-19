@@ -63,18 +63,18 @@
     
     // If we have added less photos that what was expected, then we can assume that the _count value is wrong.
     // let's update it.
-    if ( [newPhotos count] < numberOfPhotosPerPage ){
-        [self willChangeValueForKey:@"count"];
-        
-        
-        // pierrotsmnrd  2013-03-19 : The following can work only if all the previous pages have been loaded,
-        // i.e. if _photos already contains all the previous photos.
-        // TODO : Rework this mechanism for more flexibility.
-        _count = [_photos count];
-        
-        
-        countDidChange = YES;
-    }
+//    if ( [newPhotos count] < numberOfPhotosPerPage ){
+//        [self willChangeValueForKey:@"count"];
+//        
+//        
+//        // pierrotsmnrd  2013-03-19 : The following can work only if all the previous pages have been loaded,
+//        // i.e. if _photos already contains all the previous photos.
+//        // TODO : Rework this mechanism for more flexibility.
+//        _count = [_photos count];
+//        
+//        
+//        countDidChange = YES;
+//    }
     
     // sometimes, some API returns a 'count' value lower than the actual number of photos. (happened with FlickR several times)
     if ( [_photos count] > _count ) {

@@ -660,7 +660,9 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         
         [(GRKServiceGrabber<GRKServiceGrabberConnectionProtocol> *)grabber disconnectWithDisconnectionIsCompleteBlock:^(BOOL disconnected) {
             
-            [GRKServiceGrabber removeCachedUserIdForService:grabber.serviceName];
+            [GRKServiceGrabber setConnectionState:GRKServiceStateDisconnected
+                                        andUserId:nil
+                                       forService:grabber.serviceName];
             
             __strong GRKPickerServicesListRevised *sself = wself;
             
@@ -670,7 +672,9 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
             
         } andErrorBlock:^(NSError *error) {
             
-            [GRKServiceGrabber removeCachedUserIdForService:grabber.serviceName];
+            [GRKServiceGrabber setConnectionState:GRKServiceStateUnknown
+                                        andUserId:nil
+                                       forService:grabber.serviceName];
             
             __strong GRKPickerServicesListRevised *sself = wself;
             
@@ -788,15 +792,17 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         NSString *serviceName = [service objectForKey:@"title"];
         NSString * path = [GRK_BUNDLE pathForResource:[serviceName lowercaseString] ofType:@"png"];
         
-        NSString *cachedUserId = [GRKServiceGrabber cachedUserIdForService:serviceName];
+        GRKServiceState serviceState = [GRKServiceGrabber connectionStateForService:serviceName];
+        NSString *userId = [GRKServiceGrabber userIdForService:serviceName];
         
-        serviceCell.titleLabel.text = cachedUserId ? cachedUserId : serviceName;
+        serviceCell.titleLabel.text = userId ? userId : serviceName;
         serviceCell.imgView.image = [UIImage imageWithContentsOfFile:path];
         serviceCell.delegate = self;
         serviceCell.index = indexPath.row;
-        serviceCell.logoutButton.hidden = cachedUserId == nil;
+        serviceCell.logoutButton.hidden = serviceState != GRKServiceStateConnected;
         
-        [serviceCell loadUserProfileWithGrabber:[self grabberForService:service]];
+        if ( serviceState == GRKServiceStateUnknown )
+            [serviceCell loadUserProfileWithGrabber:[self grabberForService:service]];
         
         cell = serviceCell;
     }

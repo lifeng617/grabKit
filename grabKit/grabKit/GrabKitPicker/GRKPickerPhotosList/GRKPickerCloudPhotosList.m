@@ -19,6 +19,12 @@
 
 @interface GRKPickerCloudPhotosList ()<UICollectionViewDataSource, UICollectionViewDelegate, GRKPickerPhotoListThumbailDelegate>
 
+{
+    
+    BOOL _viewLoaded;
+    
+}
+
 @property (nonatomic, strong) NSArray *photos;
 @end
 
@@ -178,6 +184,14 @@
             }
             
             [_collectionView reloadData];
+            
+            if ( !_viewLoaded) {
+                
+                [_collectionView setContentOffset:CGPointMake(0, CGFLOAT_MAX)];
+                
+                _viewLoaded = YES;
+                
+            }
             
             
         }
@@ -378,6 +392,10 @@
     
     
     [_contentView addSubview:_collectionView];
+    
+    
+    _viewLoaded = NO;
+    
 }
 
 - (void)viewDidUnload

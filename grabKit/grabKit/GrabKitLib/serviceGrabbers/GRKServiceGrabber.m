@@ -32,29 +32,90 @@
 @synthesize canLoadPhotosPagesDiscontinuously = _canLoadPhotosPagesDiscontinuously;
 
 
-+(NSMutableDictionary *)userIdCache
++(NSMutableDictionary *)connectionCache
 {
     static dispatch_once_t once;
-    static NSMutableDictionary *sharedUserIdCache;
+    static NSMutableDictionary *sharedConnectionCache;
     
     dispatch_once(&once, ^{
-        sharedUserIdCache = [[NSMutableDictionary alloc] init];
+        sharedConnectionCache = [[NSMutableDictionary alloc] init];
     });
     
-    return sharedUserIdCache;
+    return sharedConnectionCache;
 }
 
-+(NSString *)cachedUserIdForService:(NSString *)serviceName
++(GRKServiceState)connectionStateForService:(NSString *)serviceName
 {
-    return [[GRKServiceGrabber userIdCache] objectForKey:serviceName];
+    
+    GRKServiceState res = GRKServiceStateUnknown;
+    
+    NSMutableDictionary *connectionCache = [GRKServiceGrabber connectionCache];
+    
+    @synchronized(connectionCache) {
+        
+        NSDictionary *connection = [[GRKServiceGrabber connectionCache] objectForKey:serviceName];
+        
+        if (connection == nil) {
+            
+            connection = @{@"state":@(GRKServiceStateUnknown)};
+            
+            [connectionCache setObject:connectionCache forKey:serviceName];
+            
+        } else {
+            
+            res = [connection[@"state"] unsignedIntegerValue];
+            
+        }
+        
+    }
+    
+    return res;
+    
 }
-+(void)cacheUserId:(NSString *)userId forService:(NSString *)serviceName
++(NSString *)userIdForService:(NSString *)serviceName
 {
-    [[GRKServiceGrabber userIdCache] setObject:userId forKey:serviceName];
+    NSString *res = nil;
+    
+    NSMutableDictionary *connectionCache = [GRKServiceGrabber connectionCache];
+    
+    @synchronized(connectionCache) {
+        
+        NSDictionary *connection = [[GRKServiceGrabber connectionCache] objectForKey:serviceName];
+        
+        if (connection == nil) {
+            
+            connection = @{@"state":@(GRKServiceStateUnknown)};
+            
+            [connectionCache setObject:connectionCache forKey:serviceName];
+            
+        } else {
+            
+            res = connection[@"userID"];
+            
+        }
+        
+    }
+    
+    return res;
 }
-+ (void) removeCachedUserIdForService:(NSString *)serviceName
+
++(void)setConnectionState:(GRKServiceState)state andUserId:(NSString *)userId forService:(NSString *)serviceName
 {
-    [[GRKServiceGrabber userIdCache] removeObjectForKey:serviceName];
+    NSMutableDictionary *connectionCache = [GRKServiceGrabber connectionCache];
+    
+    @synchronized(connectionCache) {
+        
+        if ( userId ) {
+            
+            [connectionCache setObject:@{@"state":@(state), @"userID":userId} forKey:serviceName];
+            
+        } else {
+            
+            [connectionCache setObject:@{@"state":@(state)} forKey:serviceName];
+            
+        }
+        
+    }
 }
 
 -(id) initWithServiceName:(NSString *)serviceName {

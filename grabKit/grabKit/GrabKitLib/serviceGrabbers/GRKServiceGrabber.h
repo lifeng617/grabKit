@@ -34,6 +34,13 @@
  
  
 */
+
+typedef NS_ENUM(NSUInteger, GRKServiceState) {
+    GRKServiceStateUnknown,
+    GRKServiceStateConnected,
+    GRKServiceStateDisconnected
+};
+
 @interface GRKServiceGrabber : NSObject <GRKServiceGrabberProtocol> {
     
     NSString * _serviceName;
@@ -68,9 +75,11 @@ An instance of a GRKFacebookGrabber would return YES, an instance of a GRKDevice
  */
 -(id) initWithServiceName:(NSString *)serviceName;
 
-+(NSString *)cachedUserIdForService:(NSString *)serviceName;
-+(void)cacheUserId:(NSString *)userId forService:(NSString *)serviceName;
-+(void)removeCachedUserIdForService:(NSString *)serviceName;
+
++(GRKServiceState)connectionStateForService:(NSString *)serviceName;
++(NSString *)userIdForService:(NSString *)serviceName;
+
++(void)setConnectionState:(GRKServiceState)state andUserId:(NSString *)userId forService:(NSString *)serviceName;
 
 /** @name  Managing queries */
 

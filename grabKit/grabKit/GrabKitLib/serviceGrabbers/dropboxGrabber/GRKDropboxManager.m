@@ -259,12 +259,10 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 
     if ( _applicationDidEnterBackground ){
     
-        if (connectionIsCompleteBlock != nil ){
-            dispatch_async(dispatch_get_main_queue(), ^{
-                connectionIsCompleteBlock(NO);
-                connectionIsCompleteBlock = nil;
-            });
-        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            connectionIsCompleteBlock ? connectionIsCompleteBlock(NO) : nil;
+            connectionIsCompleteBlock = nil;
+        });
     }
     
 }
@@ -293,7 +291,7 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
         BOOL connnected = [[self dropboxSession] isLinked];
         
         dispatch_async(dispatch_get_main_queue(), ^{
-            connectionIsCompleteBlock(connnected);
+            connectionIsCompleteBlock ? connectionIsCompleteBlock(connnected) : nil;
             connectionIsCompleteBlock = nil;
         });
     }
@@ -547,17 +545,17 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 - (void)restClient:(DBRestClient*)client loadedAccountInfo:(DBAccountInfo*)info
 {
     
-    if (_profileCompleteBlock != nil) {
+    NSDictionary * blockResult = [NSDictionary dictionaryWithObjectsAndKeys:[info displayName], kGRKUsernameKey,
+                                  [info referralLink], kGRKProfilePictureKey,
+                                  nil];
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
         
-        NSDictionary * blockResult = [NSDictionary dictionaryWithObjectsAndKeys:[info displayName], kGRKUsernameKey,
-                                      [info referralLink], kGRKProfilePictureKey,
-                                      nil];
+        _profileCompleteBlock ? _profileCompleteBlock(blockResult) : nil;
         
-        dispatch_async(dispatch_get_main_queue(), ^{
-            _profileCompleteBlock(blockResult);
-            _profileCompleteBlock = nil;
-        });
-    }
+        _profileCompleteBlock = nil;
+        
+    });
     
     _profileErrorBlock = nil;
 }
@@ -565,17 +563,15 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 - (void)restClient:(DBRestClient*)client loadAccountInfoFailedWithError:(NSError*)error
 {
     
-    
-    if (_profileErrorBlock) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            _profileErrorBlock(error);
-            _profileErrorBlock = nil;
-        });
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        
+        _profileErrorBlock ? _profileErrorBlock(error) : nil;
+        
+        _profileErrorBlock = nil;
+        
+    });
     
     _profileCompleteBlock = nil;
-    
-    _profileErrorBlock = nil;
 }
 
 
@@ -587,32 +583,28 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     if ([keyword isEqualToString:@"."]) {
         
         
-        if (_fetchPhotosCompleteBlock) {
+        NSMutableArray *array = [NSMutableArray array];
+        
+        for (DBMetadata *metaData in results) {
             
-            
-            NSMutableArray *array = [NSMutableArray array];
-            
-            for (DBMetadata *metaData in results) {
+            if ( ![metaData isDirectory] ) {
                 
-                if ( ![metaData isDirectory] ) {
-                    
-                    [array addObject:[self photoWithRawPhoto:metaData]];
-                    
-                }
+                [array addObject:[self photoWithRawPhoto:metaData]];
                 
             }
             
-            
-            NSArray *res = [NSArray arrayWithArray:array];
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                
-                _fetchPhotosCompleteBlock(res);
-                
-                _fetchPhotosCompleteBlock = nil;
-                
-            });
         }
+        
+        
+        NSArray *res = [NSArray arrayWithArray:array];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            
+            _fetchPhotosCompleteBlock ? _fetchPhotosCompleteBlock(res) : nil;
+            
+            _fetchPhotosCompleteBlock = nil;
+            
+        });
         
         
         _fetchPhotosErrorBlock = nil;
@@ -625,16 +617,13 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     
     _fetchPhotosCompleteBlock = nil;
     
-    if (_fetchPhotosErrorBlock) {
+    dispatch_async(dispatch_get_main_queue(), ^{
         
-        dispatch_async(dispatch_get_main_queue(), ^{
-            
-            _fetchPhotosErrorBlock(error);
-            
-            _fetchPhotosErrorBlock = nil;
-            
-        });
-    }
+        _fetchPhotosErrorBlock ? _fetchPhotosErrorBlock(error) : nil;
+        
+        _fetchPhotosErrorBlock = nil;
+        
+    });
     
 }
 

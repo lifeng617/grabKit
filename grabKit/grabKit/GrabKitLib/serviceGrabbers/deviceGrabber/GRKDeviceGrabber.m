@@ -385,7 +385,8 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
                                              }
                                              
                                              GRKPhoto * photo = [me photoFromALAsset:result atIndex:index];
-                                             [newPhotos addObject:photo];
+                                             if (photo.photoId)
+                                                 [newPhotos addObject:photo];
                                              
                                          }];
         

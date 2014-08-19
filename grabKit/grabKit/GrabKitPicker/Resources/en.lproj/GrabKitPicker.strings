@@ -30,7 +30,7 @@
 
 "GRK_ALBUMS_LIST_ERROR_RETRY" = "An error occured. Please retry.";
 
-"GRK_ALBUMS_LIST_HUD_LOADING" = "Loading ...";
+"GRK_ALBUMS_LIST_HUD_LOADING" = "Loading...";
 
 "GRK_ALBUMS_LIST_ALL_ALBUMS_LOADED" = "All albums loaded";
 

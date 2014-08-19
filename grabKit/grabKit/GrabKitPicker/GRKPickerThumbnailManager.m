@@ -35,6 +35,8 @@
 #import "GRKDropboxManager.h"
 #import "EGOCache.h"
 
+//#define USE_EGOCACHE
+
 @interface UIImage (FixOrientation)
 
 - (UIImage *)normalizedImage;
@@ -64,7 +66,11 @@ NSString * completeBlockKey = @"completeBlock";
 NSString * errorBlockKey = @"errorBlock";
 
 // A global NSCache instance, used to store the downloaded thumbnails
+#ifdef USE_EGOCACHE
+EGOCache * sharedThumbnailCache = nil;
+#else
 NSCache * sharedThumbnailCache = nil;
+#endif
 EGOCache * sharedPhotoCache = nil;
 
 // Singleton of the current class
@@ -108,11 +114,17 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
 }
 
 
+#ifdef USE_EGOCACHE
++(EGOCache *) thumbnailCache {
+    
+    return [EGOCache globalCache];
+}
+#else
 +(NSCache *) thumbnailCache {
     
     if ( sharedThumbnailCache == nil ){
         sharedThumbnailCache = [[NSCache alloc] init];
-       // sharedThumbnailCache.countLimit = 100;
+        // sharedThumbnailCache.countLimit = 100;
         sharedThumbnailCache.totalCostLimit = 1024 * 1024 * 2; // 2 MB cache size
         
         sharedThumbnailCache.delegate = [GRKPickerThumbnailManager sharedInstance];
@@ -120,6 +132,8 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     
     return sharedThumbnailCache;
 }
+#endif
+
 
 +(EGOCache *) photoCache {
     
@@ -138,17 +152,26 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
         
     } else {
         
+        
+#ifdef USE_EGOCACHE
+        EGOCache *cache = [GRKPickerThumbnailManager thumbnailCache];
+        [cache setImage:thumbnailImage forKey:[self cacheKeyForURL:thumbnailURL andSize:size] withTimeoutInterval:3600];
+#else
+        
         NSData * thumbnailData = UIImageJPEGRepresentation(thumbnailImage, 0);
         
         NSUInteger thumbnailCost = [thumbnailData length];
         
         NSCache *cache = [GRKPickerThumbnailManager thumbnailCache];
+        
         [cache setObject:thumbnailData forKey:[self cacheKeyForURL:thumbnailURL andSize:size] cost:thumbnailCost];
         
 #if DEBUG_CACHE
         thumbnailCacheCount++;
         thumbnailCacheCostCount += thumbnailCost;
         NSLog(@" thumbnail cache count : %d, cost : %d", thumbnailCacheCount, thumbnailCacheCostCount );
+#endif
+        
 #endif
         
     }
@@ -175,6 +198,13 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
         
     } else {
         
+#ifdef USE_EGOCACHE
+        
+        EGOCache *cache = [GRKPickerThumbnailManager thumbnailCache];
+        
+        cachedThumbnail = [cache imageForKey:[self cacheKeyForURL:thumbnailURL andSize:thumbnailSize]];
+        
+#else
         NSCache *cache = [GRKPickerThumbnailManager thumbnailCache];
         
         NSData * cachedThumbnailData = [cache objectForKey:[self cacheKeyForURL:thumbnailURL andSize:thumbnailSize]];
@@ -183,10 +213,9 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
             cachedThumbnail = [UIImage imageWithData:cachedThumbnailData];
             
         }
+#endif
         
     }
-    
-    
     
     return cachedThumbnail;
     
@@ -215,15 +244,11 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     // If the thumbnail has already been cached
     if ( cachedThumbnail != nil ){
         
-        if ( completeBlock != nil ){
-        
-            dispatch_async(dispatch_get_main_queue(), ^{
-                
-                    completeBlock(cachedThumbnail, YES);
-                
-            });
-        
-        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            
+            if (completeBlock) completeBlock(cachedThumbnail, YES);
+            
+        });
         
         return;
     }
@@ -264,9 +289,7 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
             
         } failureBlock:^(NSError *error) {
             
-            if ( errorBlock != nil ){
-                errorBlock(error);
-            }
+            if ( errorBlock ) errorBlock(error);
             
         }];
         
@@ -351,66 +374,61 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     
     __block AsyncURLConnection * connection = nil;
     
-    if ( thumbnailSizeValue != nil && completeBlock != nil ){
+    connection = [AsyncURLConnection connectionWithString:[nextThumbnailURL absoluteString] responseBlock:nil progressBlock:nil completeBlock:^(NSData *data) {
         
-        connection = [AsyncURLConnection connectionWithString:[nextThumbnailURL absoluteString] responseBlock:nil progressBlock:nil completeBlock:^(NSData *data) {
-            
-            DECREASE_OPERATIONS_COUNT
-            
-            CGSize thumbnailSize = [thumbnailSizeValue CGSizeValue];
-            
-            UIImage * thumbnail = nil;
-            
-            if (CGSizeEqualToSize(thumbnailSize, CGSizeZero)) {
-                thumbnail = [UIImage imageWithData:data];
-            } else {
-                thumbnail = [[UIImage imageWithData:data] thumbnailImageWithSize:thumbnailSize];
-            }
-            
-            // store the thumbnail in the cache
-            [self cacheThumbnail:thumbnail forURL:nextThumbnailURL andSize:thumbnailSize];
-            
-            if (completeBlock != nil ){
-                completeBlock( thumbnail, NO);
-            }
-            
-            
-            [connections removeObject:connection];
-            [self downloadNextThumbnail];
-            connection = nil;
-            
-        } errorBlock:^(NSError *error) {
-            
-            DECREASE_OPERATIONS_COUNT
-            
-            NSLog(@" error while downloading content at url %@ :\n %@", nextThumbnailURL, error);
-            
-            // oops !
-            if ( errorBlock != nil ){
-                errorBlock(error);
-            }
-            
-            
-            [connections removeObject:connection];
-            [self downloadNextThumbnail];
-            
-            connection = nil;
-        }];
+        DECREASE_OPERATIONS_COUNT
         
-        // remove the data after the creation of the request,
-        // to let the block retain the var nextThumbnailURL, completeBlock, etc
-        // Otherwise, these vars are released, and it makes the app crash.
-        [thumbnailsQueue removeObjectAtIndex:0];
+        CGSize thumbnailSize = [thumbnailSizeValue CGSizeValue];
+        
+        UIImage * thumbnail = nil;
+        
+        if (CGSizeEqualToSize(thumbnailSize, CGSizeZero)) {
+            thumbnail = [UIImage imageWithData:data];
+        } else {
+            thumbnail = [[UIImage imageWithData:data] thumbnailImageWithSize:thumbnailSize];
+        }
+        
+        // store the thumbnail in the cache
+        [self cacheThumbnail:thumbnail forURL:nextThumbnailURL andSize:thumbnailSize];
+        
+        if (completeBlock != nil ){
+            completeBlock( thumbnail, NO);
+        }
         
         
-        [connections addObject:connection];
-        INCREASE_OPERATIONS_COUNT
-        [connection start];
+        [connections removeObject:connection];
+        [self downloadNextThumbnail];
+        connection = nil;
+        
+    } errorBlock:^(NSError *error) {
+        
+        DECREASE_OPERATIONS_COUNT
+        
+        NSLog(@" error while downloading content at url %@ :\n %@", nextThumbnailURL, error);
+        
+        // oops !
+        if ( errorBlock != nil ){
+            errorBlock(error);
+        }
+        
+        
+        [connections removeObject:connection];
+        [self downloadNextThumbnail];
+        
+        connection = nil;
+    }];
+    
+    // remove the data after the creation of the request,
+    // to let the block retain the var nextThumbnailURL, completeBlock, etc
+    // Otherwise, these vars are released, and it makes the app crash.
+    [thumbnailsQueue removeObjectAtIndex:0];
+    
+    
+    [connections addObject:connection];
+    INCREASE_OPERATIONS_COUNT
+    [connection start];
 
-        
-    }
-
-        
+    
 }
 
 

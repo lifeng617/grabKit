@@ -37,6 +37,12 @@ NSUInteger kCellWidth = 75;
 NSUInteger kCellHeight = 75;
 
 @interface GRKPickerPhotosList()<GRKPickerPhotoListThumbailDelegate>
+
+{
+    
+    BOOL _viewLoaded;
+    
+}
     -(void) setState:(GRKPickerPhotosListState)newState;
     -(void) loadPage:(NSUInteger)pageIndex;
     -(void) markPageIndexAsLoading:(NSUInteger)pageIndex;
@@ -154,6 +160,8 @@ NSUInteger kCellHeight = 75;
 
     [self.view addSubview:_collectionView];
     
+    _viewLoaded = NO;
+    
     
 }
 
@@ -171,15 +179,28 @@ NSUInteger kCellHeight = 75;
     self.navigationItem.title = _album.name;
     
     [self updateRightBarButtonItem];
+    
+    
+    if ( !_viewLoaded  && _album.count > 0) {
+        
+        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:_album.count - 1 inSection:0];
+        
+        [_collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionBottom animated:NO];
+        
+//        [_collectionView setContentOffset:CGPointMake(0, CGFLOAT_MAX)];
+        
+        _viewLoaded = YES;
+        
+    }
 
 }
 
 -(void) loadPage:(NSUInteger)pageIndex; {
     
-    if ( [_indexesOfLoadingPages containsObject:[NSNumber numberWithInt:pageIndex]] )
+    if ( [_indexesOfLoadingPages containsObject:[NSNumber numberWithUnsignedInteger:pageIndex]] )
         return;
     
-    if ( [_indexesOfLoadedPages containsObject:[NSNumber numberWithInt:pageIndex]] )
+    if ( [_indexesOfLoadedPages containsObject:[NSNumber numberWithUnsignedInteger:pageIndex]] )
         return;
 
     
@@ -188,7 +209,7 @@ NSUInteger kCellHeight = 75;
         
         
         // If the previous page has not been loaded,
-        if ( ! [_indexesOfLoadedPages containsObject:[NSNumber numberWithInt:pageIndex-1]] ) {
+        if ( ! [_indexesOfLoadedPages containsObject:[NSNumber numberWithUnsignedInteger:pageIndex-1]] ) {
             
             
                 // mark pageIndex to load
@@ -235,6 +256,19 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
                
                // Then, reload the collectionView
                [_collectionView reloadData];
+               
+//               // sometimes, we have to reload the items manually.
+//               NSMutableArray * indexPathsToReload = [NSMutableArray array];
+//               
+//               for ( int i = (pageIndex * kNumberOfPhotosPerPage);
+//                    i <= (pageIndex+1) * kNumberOfPhotosPerPage -1 && i <= _album.count - 1;
+//                    i++ ){
+//                   
+//                   [indexPathsToReload addObject:[NSIndexPath indexPathForItem:i inSection:0]];
+//                   
+//               }
+//               
+//               [_collectionView reloadItemsAtIndexPaths:indexPathsToReload];
 
                // Then, set the selected items again
                for ( NSIndexPath * indexPathOfSelectedItem in selectedItems ){
@@ -249,7 +283,7 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
                NSMutableArray * indexPathsToReload = [NSMutableArray array];
            
                for ( int i = (pageIndex * kNumberOfPhotosPerPage);
-                    i <= (pageIndex+1) * kNumberOfPhotosPerPage -1 && i < _album.count - 1;
+                    i <= (pageIndex+1) * kNumberOfPhotosPerPage -1 && i <= _album.count - 1;
                     i++ ){
            
                    [indexPathsToReload addObject:[NSIndexPath indexPathForItem:i inSection:0]];
@@ -564,6 +598,11 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     
+    
+    
+//    NSLog(@"loading : %d", indexPath.item);
+    
+    
     GRKPickerPhotosListThumbnail * cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"pickerPhotosCell" forIndexPath:indexPath];
     cell.backgroundColor = [UIColor whiteColor];
     cell.index = indexPath.row;
@@ -580,11 +619,15 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
             cell.selected = YES;
         }
         
+//        NSLog(@"load : %d", indexPath.item);
+        
         
     } else {
         
         int pageOfThisCell = ceil( indexPath.row / kNumberOfPhotosPerPage );
-            
+        
+//        NSLog(@"nil : %d", indexPath.item);
+        
         [self loadPage:pageOfThisCell];
 
         
