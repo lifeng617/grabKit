@@ -73,6 +73,11 @@
     
     self.photo = nil;
     
+    self.scrollView.delegate = nil;
+    self.scrollView = nil;
+    self.container = nil;
+    self.imageView = nil;
+    
 }
 
 - (void)viewDidLoad

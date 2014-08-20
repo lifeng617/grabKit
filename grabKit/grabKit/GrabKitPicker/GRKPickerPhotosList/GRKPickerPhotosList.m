@@ -32,6 +32,7 @@
 
 // How many photos the grabber can load at a time
 NSUInteger kNumberOfPhotosPerPage = 32;
+NSUInteger kMaximumNumberOfPhotosToLoadAtSameTime = 5;
 
 NSUInteger kCellWidth = 75;
 NSUInteger kCellHeight = 75;
@@ -115,10 +116,10 @@ NSUInteger kCellHeight = 75;
         if ([parent minimumSelectionAllowed] == 1) {
             _tipLabel.text = @"Pick 1 photo for your card.";
         } else {
-            _tipLabel.text = [NSString stringWithFormat:@"Pick %d photos for your card.", [parent minimumSelectionAllowed]];
+            _tipLabel.text = [NSString stringWithFormat:@"Pick %d photos for your card.", (int)[parent minimumSelectionAllowed]];
         }
     } else {
-        _tipLabel.text = [NSString stringWithFormat:@"%d of %d photos selected.", [[parent selectedPhotos] count], [parent minimumSelectionAllowed]];
+        _tipLabel.text = [NSString stringWithFormat:@"%d of %d photos selected.", (int)[[parent selectedPhotos] count], (int)[parent minimumSelectionAllowed]];
     }
     [self.view addSubview:_tipLabel];
     
@@ -196,9 +197,10 @@ NSUInteger kCellHeight = 75;
 }
 
 -(void) loadPage:(NSUInteger)pageIndex; {
-    
+
     if ( [_indexesOfLoadingPages containsObject:[NSNumber numberWithUnsignedInteger:pageIndex]] )
         return;
+    
     
     if ( [_indexesOfLoadedPages containsObject:[NSNumber numberWithUnsignedInteger:pageIndex]] )
         return;
@@ -223,6 +225,11 @@ NSUInteger kCellHeight = 75;
         }
     }
     
+    if ([_indexesOfLoadingPages count] > kMaximumNumberOfPhotosToLoadAtSameTime) {
+        [self markPageIndexToLoad:pageIndex];
+        return;
+    }
+    
     
     
     [self markPageIndexAsLoading:pageIndex];
@@ -236,13 +243,13 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
            [self markPageIndexAsLoaded:pageIndex];
            
            // If the grabber returned less photos than expected, we can consider that all photos have been grabbed.
-           if ( [results count] < kNumberOfPhotosPerPage ){
-               [self setState:GRKPickerPhotosListStateAllPhotosGrabbed];
-               
-           } else {
+//           if ( [results count] < kNumberOfPhotosPerPage ){
+//               [self setState:GRKPickerPhotosListStateAllPhotosGrabbed];
+//               
+//           } else {
                [self setState:GRKPickerPhotosListStatePhotosGrabbed];
                
-           }
+//           }
            
            
            // if we must reload the whole collectionView because the property album.count changed
@@ -281,15 +288,24 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
                // Else, only reload items for the given indexPaths (not the whole collectionView)
                
                NSMutableArray * indexPathsToReload = [NSMutableArray array];
+               
+               int start = pageIndex * kNumberOfPhotosPerPage;
+               int end = (pageIndex+1) * kNumberOfPhotosPerPage;
+               
            
-               for ( int i = (pageIndex * kNumberOfPhotosPerPage);
-                    i <= (pageIndex+1) * kNumberOfPhotosPerPage -1 && i <= _album.count - 1;
-                    i++ ){
-           
-                   [indexPathsToReload addObject:[NSIndexPath indexPathForItem:i inSection:0]];
-           
+//               for ( int i = start; i < end && i < _album.count; i++ ){
+//           
+//                   [indexPathsToReload addObject:[NSIndexPath indexPathForItem:i inSection:0]];
+//           
+//               }
+               
+               NSArray *visibleIndexPaths = [_collectionView indexPathsForVisibleItems];
+               
+               for (NSIndexPath *indexPath in visibleIndexPaths) {
+                   if (indexPath.item >= start && indexPath.item < end)
+                       [indexPathsToReload addObject:indexPath];
                }
-           
+               
                [_collectionView reloadItemsAtIndexPaths:indexPathsToReload];
            
            }
@@ -303,9 +319,9 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
          
            
        } andErrorBlock:^(NSError *error) {
-           NSLog(@" error for page %d : %@", pageIndex,  error);
+           NSLog(@" error for page %d : %@", (int)pageIndex,  error);
            
-           [_indexesOfLoadingPages removeObject:[NSNumber numberWithInt:pageIndex]];
+           [_indexesOfLoadingPages removeObject:[NSNumber numberWithInt:(int)pageIndex]];
            [self setState:GRKPickerPhotosListStateGrabbingFailed];
            
        }];
@@ -339,12 +355,36 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
 }
 
 -(void) didTouchDoneButton {
+    
+    // stop all operations of the grabber
+    [_grabber cancelAll];
+    
+    // stop all loads of thumbnails
+    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
+    [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
+    
+    // Reset the operations count.
+    // If the view disappears while something is loading (i.e. after an INCREASE_OPERATIONS_COUNT),
+    //  the corresponding DECREASE_OPERATIONS_COUNT is not called, and the activity indicator remains spinning...
+    RESET_OPERATIONS_COUNT
 
     [[GRKPickerViewController sharedInstance] done];
     
 }
 
 -(void) didTouchCancelButton {
+    
+    // stop all operations of the grabber
+    [_grabber cancelAll];
+    
+    // stop all loads of thumbnails
+    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
+    [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
+    
+    // Reset the operations count.
+    // If the view disappears while something is loading (i.e. after an INCREASE_OPERATIONS_COUNT),
+    //  the corresponding DECREASE_OPERATIONS_COUNT is not called, and the activity indicator remains spinning...
+    RESET_OPERATIONS_COUNT
     
     [[GRKPickerViewController sharedInstance] dismiss];
     
@@ -360,18 +400,6 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
 - (void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
-
-    // stop all operations of the grabber
-    [_grabber cancelAll];
-    
-    // stop all loads of thumbnails
-    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
-    [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
-    
-    // Reset the operations count.
-    // If the view disappears while something is loading (i.e. after an INCREASE_OPERATIONS_COUNT),
-    //  the corresponding DECREASE_OPERATIONS_COUNT is not called, and the activity indicator remains spinning...
-    RESET_OPERATIONS_COUNT
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -446,13 +474,13 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
     
     [self setState:GRKPickerPhotosListStateGrabbing];
     
-    if ( [_indexesOfLoadingPages indexOfObject:[NSNumber numberWithInt:pageIndex]] == NSNotFound ){
-
-        [_indexesOfLoadingPages addObject:[NSNumber numberWithInt:pageIndex]];
+    if ( [_indexesOfLoadingPages indexOfObject:[NSNumber numberWithInt:(int)pageIndex]] == NSNotFound ){
+        
+        [_indexesOfLoadingPages addObject:[NSNumber numberWithInt:(int)pageIndex]];
         //NSLog(@" page %d marked as LOADING", pageIndex);
     }
     
-    [_indexesOfPagesToLoad removeObject:[NSNumber numberWithInt:pageIndex]];
+    [_indexesOfPagesToLoad removeObject:[NSNumber numberWithInt:(int)pageIndex]];
     
 }
 
@@ -460,21 +488,31 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
     
     //NSLog(@" page %d marked as LOADED", pageIndex);
     
-    [_indexesOfLoadedPages addObject:[NSNumber numberWithInt:pageIndex]];
-    [_indexesOfLoadingPages removeObject:[NSNumber numberWithInt:pageIndex]];
-    [_indexesOfPagesToLoad removeObject:[NSNumber numberWithInt:pageIndex]];
+    [_indexesOfLoadedPages addObject:[NSNumber numberWithInt:(int)pageIndex]];
+    [_indexesOfLoadingPages removeObject:[NSNumber numberWithInt:(int)pageIndex]];
+    [_indexesOfPagesToLoad removeObject:[NSNumber numberWithInt:(int)pageIndex]];
 }
 
 
 -(void) markPageIndexToLoad:(NSUInteger)pageIndex;{
     
-    if ( [_indexesOfPagesToLoad indexOfObject:[NSNumber numberWithInt:pageIndex]] == NSNotFound ){
-        [_indexesOfPagesToLoad addObject:[NSNumber numberWithInt:pageIndex]];
+    @synchronized(_indexesOfPagesToLoad) {
         
-        //NSLog(@" page %d marked as TO LOAD", pageIndex);
+        NSUInteger index = [_indexesOfPagesToLoad indexOfObject:[NSNumber numberWithInt:(int)pageIndex]];
+        if ( index == NSNotFound ){
+            [_indexesOfPagesToLoad addObject:[NSNumber numberWithInt:(int)pageIndex]];
+            
+            //NSLog(@" page %d marked as TO LOAD", pageIndex);
+        }
+        else if ( index > 0 ) {
+            
+            [_indexesOfPagesToLoad removeObjectAtIndex:index];
+            [_indexesOfPagesToLoad insertObject:[NSNumber numberWithInt:(int)pageIndex] atIndex:0];
+        }
+        
     }
 }
-    
+
 
 
 
@@ -679,7 +717,7 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
         NSString *message;
         
         if (maximumSelection > 1) {
-            message = [NSString stringWithFormat:@"The layout you chose has room for %d photos. Please choose your favorite %d photos.", maximumSelection, maximumSelection];
+            message = [NSString stringWithFormat:@"The layout you chose has room for %d photos. Please choose your favorite %d photos.", (int)maximumSelection, (int)maximumSelection];
         } else {
             message = @"The layout you chose has room for 1 photo. Please choose your favorite photo.";
         }
