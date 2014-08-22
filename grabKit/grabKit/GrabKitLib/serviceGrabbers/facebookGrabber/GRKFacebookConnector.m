@@ -76,7 +76,7 @@ static NSString * expirationDateKey = @"ExpirationDateKey";
             _applicationDidEnterBackground = NO;
         
             [FBSession setDefaultAppID:[GRKCONFIG facebookAppId]];
-            NSArray *permissions = [NSArray arrayWithObjects:@"user_photos", @"user_photo_video_tags", nil];
+            NSArray *permissions = [NSArray arrayWithObjects:@"email", @"user_photos", @"user_photo_video_tags", nil];
         
         
             // The "_isConnecting" flag is usefull to use the FBSession object in a different purpose than it was built for.

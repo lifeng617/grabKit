@@ -27,6 +27,8 @@
 #import "GRKFacebookQuery.h"
 #import "GRKConstants.h"
 #import <FacebookSDK/FBError.h>
+#import <FacebookSDK/FBSession.h>
+#import <FacebookSDK/FBAccessTokenData.h>
 
 @implementation GRKFacebookGrabber (usernameAndProfilePicture)
 
@@ -83,11 +85,9 @@
                                        NSString * username = [result objectForKey:@"name"];
                                        NSString * profilePictureURLString = [[[result objectForKey:@"picture"] objectForKey:@"data"] objectForKey:@"url"];
                                        
-
-                                       NSDictionary * blockResult = [NSDictionary dictionaryWithObjectsAndKeys:username, kGRKUsernameKey,
-                                                                    profilePictureURLString, kGRKProfilePictureKey,
-                                                                 nil];
-                                   
+                                       NSDictionary *blockResult = @{kGRKUsernameKey:username,
+                                                                     kGRKProfilePictureKey:profilePictureURLString};
+                                       
                                        dispatch_async_on_main_queue(completeBlock, blockResult);
                                        
                                    }
