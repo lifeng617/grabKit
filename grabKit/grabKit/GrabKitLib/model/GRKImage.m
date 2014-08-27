@@ -45,6 +45,16 @@
     return self;
 }
 
+#if DEBUG
+- (void) dealloc
+{
+    if (self.image != nil)
+        NSLog(@"has an image");
+    
+    self.image = nil;
+}
+#endif
+
 -(id) initWithURLString:(NSString *)URLString andWidth:(NSUInteger)width andHeight:(NSUInteger)height isOriginal:(BOOL)isOriginal;
 {
     return [self initWithURL:[NSURL URLWithString:URLString] andWidth:width andHeight:height isOriginal:isOriginal];

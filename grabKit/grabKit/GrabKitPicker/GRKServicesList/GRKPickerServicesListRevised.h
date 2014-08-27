@@ -25,4 +25,6 @@
     GRKPickerAlbumsListState state; // state of the controller
 }
 
+- (void) loadAssetAlbums;
+- (void) unloadAssetAlbums;
 @end

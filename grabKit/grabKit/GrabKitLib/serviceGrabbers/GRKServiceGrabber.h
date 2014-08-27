@@ -155,6 +155,8 @@ An instance of a GRKFacebookGrabber would return YES, an instance of a GRKDevice
 */
 -(NSError *)errorForFillCoverOperation;
 
+- (NSUInteger)numberOfPhotosPerPage;
+
 @end
 
 

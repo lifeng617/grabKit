@@ -23,6 +23,8 @@
 
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+#import <AssetsLibrary/AssetsLibrary.h>
 #import "GRKImage.h"
 
 @class GRKAlbum;
@@ -112,6 +114,8 @@ extern GRKPhotoDateProperty * const kGRKPhotoDatePropertyDateTaken;
 @property (nonatomic, strong, readonly) NSString * caption;
 /** NSArray of GRKImage objects, containing the different versions of the photo. */
 @property (nonatomic, strong, readonly) NSArray * images;
+
+@property (nonatomic, strong) UIImage *thumbnail;
 
 @property (nonatomic, weak, readonly) GRKAlbum * album;
 

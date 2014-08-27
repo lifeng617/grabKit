@@ -109,6 +109,11 @@
     [_dates setObject:newDate forKey:dateProperty];
 }
 
+-(void) clear
+{   
+    _photos = [NSMutableDictionary dictionary];
+    _photosIds = [NSMutableArray array];
+}
 
 
 @end

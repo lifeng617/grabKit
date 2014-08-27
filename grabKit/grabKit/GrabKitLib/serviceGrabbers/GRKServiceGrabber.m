@@ -312,5 +312,10 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
     NSAssert(false, @" the object %@ doesn't mask the method [%@ cancelAllWithCompleteBlock:]", self, [self class]);
 }
 
+- (NSUInteger)numberOfPhotosPerPage
+{
+    return 32;
+}
+
 
 @end

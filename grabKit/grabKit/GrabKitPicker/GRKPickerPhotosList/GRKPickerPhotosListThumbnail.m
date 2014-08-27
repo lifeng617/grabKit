@@ -72,7 +72,8 @@ static UIImage * thumbnailPlaceholderImage;
     self.backgroundView = backgroundImage;
     
     // The imageView's frame is 1px smaller in every directions, in order to show the 1px-wide black border of the background image.
-    CGRect thumbnailRect = CGRectMake(1, 1, self.bounds.size.width -2 , self.bounds.size.height -2 );
+//    CGRect thumbnailRect = CGRectMake(1, 1, self.bounds.size.width -2 , self.bounds.size.height -2 );
+    CGRect thumbnailRect = self.bounds;
     thumbnailImageView = [[UIImageView alloc] initWithFrame:thumbnailRect];
     thumbnailImageView.contentMode = UIViewContentModeScaleAspectFill;
     thumbnailImageView.clipsToBounds = YES;
@@ -123,7 +124,10 @@ static UIImage * thumbnailPlaceholderImage;
 
 
 
--(void)updateThumbnailWithImage:(UIImage*)image  animated:(BOOL)animated; {
+-(void)updateThumbnailWithImage:(UIImage*)image  animated:(BOOL)animated {
+    
+    
+    BOOL showExpandButton = (image != nil && self.delegate != nil) ? 1 : 0;
     
     if ( thumbnailImageView.image == nil  &&  animated ){
         
@@ -134,7 +138,7 @@ static UIImage * thumbnailPlaceholderImage;
         [UIView animateWithDuration:0.33 animations:^{
             
             thumbnailImageView.alpha = 1.;
-            expandButton.alpha = self.delegate ? 1 : 0;
+            expandButton.alpha = showExpandButton ? 1 : 0;
         
         } completion:^(BOOL finished) {
             
@@ -148,15 +152,14 @@ static UIImage * thumbnailPlaceholderImage;
             
         // UI updates must be done on the main thread
         dispatch_async(dispatch_get_main_queue(), ^{
-            expandButton.alpha = self.delegate ? 1 : 0;
+            expandButton.alpha = showExpandButton ? 1 : 0;
             [thumbnailImageView setImage:image];
             
             if ( selectedImageView.superview == nil ){
                 [self.contentView addSubview:selectedImageView];
             }
         });
-
-            
+        
     }
     
     

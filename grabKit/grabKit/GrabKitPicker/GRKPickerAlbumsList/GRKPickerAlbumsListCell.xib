@@ -33,10 +33,18 @@
                         <color key="textColor" red="0.5543478261" green="0.5543478261" blue="0.5543478261" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
+                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Album type" lineBreakMode="tailTruncation" adjustsFontSizeToFit="NO" id="v12-yt-pHD">
+                        <rect key="frame" x="87" y="52" width="150" height="25"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                        <color key="textColor" red="0.5543478261" green="0.5543478261" blue="0.5543478261" alpha="1" colorSpace="calibratedRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
                 </subviews>
             </tableViewCellContentView>
             <connections>
                 <outlet property="labelAlbumName" destination="13" id="18"/>
+                <outlet property="labelAlbumType" destination="v12-yt-pHD" id="Ha0-cx-m02"/>
                 <outlet property="labelPhotosCount" destination="14" id="20"/>
                 <outlet property="thumbnail" destination="8" id="35"/>
             </connections>

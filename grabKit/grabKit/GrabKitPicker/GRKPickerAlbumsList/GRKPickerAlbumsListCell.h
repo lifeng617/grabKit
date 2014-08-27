@@ -40,6 +40,7 @@
 
 @property (nonatomic, strong) IBOutlet GRKPickerPhotosListThumbnail * thumbnail;
 @property (nonatomic, strong) IBOutlet UILabel * labelAlbumName;
+@property (nonatomic, strong) IBOutlet UILabel * labelAlbumType;
 @property (nonatomic, strong) IBOutlet UILabel * labelPhotosCount;
 
 -(void)updateThumbnailWithImage:(UIImage*)image animated:(BOOL)animated;

@@ -25,6 +25,8 @@
 #import "GRKPickerThumbnailManager.h"
 #import "MBProgressHUD.h"
 
+#import "GRKPickerServicesListRevised.h"
+
 @implementation GRKPickerViewController (privateMethods)
 
 
@@ -179,17 +181,17 @@
     
 }
 
-
 -(void) done {
-    
-    
-    __weak GRKPickerViewController *wself = self;
     
     [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
     [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfPhotosToDownload];
     [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
     
+    [self.navigationController popToRootViewControllerAnimated:NO];
+    
     [self showHUD];
+    
+    __weak GRKPickerViewController *wself = self;
     
     [self extractMediasFromSelectionWithCompletionHandler:^( void ) {
         
@@ -244,6 +246,8 @@
 }
 
 -(void) dismiss {
+    
+    [self.navigationController popToRootViewControllerAnimated:NO];
     
     if ( [self isPresentedInPopover] ){
         
@@ -307,28 +311,17 @@
             continue;
         }
         
-        __weak GRKPickerViewController *wself = self;
-        
         [[GRKPickerThumbnailManager sharedInstance] downloadPhotoAtURL:image.URL withCompleteBlock:^(UIImage *thumbnail, BOOL retrievedFromCache) {
             
-            __strong GRKPickerViewController *sself = wself;
-            
-            if ( !sself )
-                return;
             
             image.image = thumbnail;
             
-            [sself downloadMediaAtIndex:index + 1 withCompletionHandler:handler];
+            [self downloadMediaAtIndex:index + 1 withCompletionHandler:handler];
             
             
         } andErrorBlock:^(NSError *error) {
             
-            __strong GRKPickerViewController *sself = wself;
-            
-            if ( !sself )
-                return;
-            
-            [sself downloadMediaAtIndex:index + 1 withCompletionHandler:handler];
+            [self downloadMediaAtIndex:index + 1 withCompletionHandler:handler];
             
         }];
         

@@ -29,6 +29,7 @@
 
 @synthesize thumbnail;
 @synthesize labelAlbumName;
+@synthesize labelAlbumType;
 @synthesize labelPhotosCount;
 
 
@@ -57,6 +58,7 @@
     _album = _newAlbum;
     
     labelAlbumName.text = _album.name;
+    labelAlbumType.text = _album.albumType;
     
 
     // In this cell, we want the label for the photos count to be placed right after the name of the album

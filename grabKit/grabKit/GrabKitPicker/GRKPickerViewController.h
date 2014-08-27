@@ -122,6 +122,7 @@
 
 /** returns the singleton of GRKPickerViewController */
 +(GRKPickerViewController *) sharedInstance;
++(void)removeSharedInstance;
 
 /** This methods builds a UIPopoverViewController and displays the GRKPickerViewController within. 
 

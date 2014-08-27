@@ -59,6 +59,18 @@ GRKPickerViewController * pickerViewControllerSharedInstance = nil;
     
 }
 
++(void)removeSharedInstance
+{
+    pickerViewControllerSharedInstance = nil;
+}
+
+-(void)dealloc
+{
+#if DEBUG
+    NSLog(@"GRKPickerViewController is being deallocated now...");
+#endif
+}
+
 
 -(id) initWithRootViewController:(UIViewController *)rootViewController{
     
@@ -127,6 +139,21 @@ GRKPickerViewController * pickerViewControllerSharedInstance = nil;
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    GRKPickerServicesListRevised *serviceList = [self.viewControllers firstObject];
+    [serviceList loadAssetAlbums];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    GRKPickerServicesListRevised *serviceList = [self.viewControllers firstObject];
+    [serviceList unloadAssetAlbums];
 }
 
 - (void)didReceiveMemoryWarning

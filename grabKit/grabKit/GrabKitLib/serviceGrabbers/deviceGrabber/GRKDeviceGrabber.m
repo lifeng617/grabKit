@@ -96,7 +96,7 @@ static NSString *kGRKServiceNameDevice = @"device";
         
         NSException* exception = [NSException
                                   exceptionWithName:@"numberOfAlbumsPerPageTooHigh"
-                                  reason:[NSString stringWithFormat:@"The number of albums per page you asked (%d) is too high", numberOfAlbumsPerPage]
+                                  reason:[NSString stringWithFormat:@"The number of albums per page you asked (%d) is too high", (int)numberOfAlbumsPerPage]
                                   userInfo:nil];
         @throw exception;
     }
@@ -208,6 +208,28 @@ static NSString *kGRKServiceNameDevice = @"device";
                                    return;
                                }
                                
+                               
+                               /* When all the groups have been enumerated, a nil group is passed to this block.
+                                then call the completeBlock and return
+                                */
+                               if ( group == nil ){
+                                   *stop = YES;
+                                   [self decrementQueriesCount];
+                                   dispatch_async_on_main_queue(completeBlock, albums);
+                                   
+                                   return;
+                               }
+                               
+                               NSString * albumId = [group valueForProperty:ALAssetsGroupPropertyPersistentID];
+                               if ( albumId == nil ){
+                                   return;
+                               }
+                               
+                               ALAssetsGroupType type = [[group valueForProperty:ALAssetsGroupPropertyType] intValue];
+                               
+                               if (type == ALAssetsGroupPhotoStream)
+                                   return;
+                               
                                indexOfIteratedAssetsGroup++;
                                
                                
@@ -233,18 +255,6 @@ static NSString *kGRKServiceNameDevice = @"device";
                                    return;
                                }
                                
-                               
-                               /* When all the groups have been enumerated, a nil group is passed to this block.
-                                then call the completeBlock and return
-                                */
-                               if ( group == nil ){
-                                    *stop = YES;
-                                    [self decrementQueriesCount];
-                                	dispatch_async_on_main_queue(completeBlock, albums);
-                                   
-                                   return;
-                               }
-                               
 //                               NSLog( @"%d group : %@", indexOfIteratedAssetsGroup, group);
                                
                                // Let's fetch the group's informations to build a GRKAlbum
@@ -252,10 +262,6 @@ static NSString *kGRKServiceNameDevice = @"device";
                                // restrict the group to photos only (i.e. excluding videos) to have the proper 'numberOfAssets' value
                                [group setAssetsFilter:[ALAssetsFilter allPhotos]];
                                
-                               NSString * albumId = [group valueForProperty:ALAssetsGroupPropertyPersistentID];
-                               if ( albumId == nil ){
-                                   return;
-                               }
                                
                                NSString * albumName = [group valueForProperty:ALAssetsGroupPropertyName];
                                NSUInteger count = [group numberOfAssets];
@@ -263,9 +269,34 @@ static NSString *kGRKServiceNameDevice = @"device";
                                // Build the GRKAlbum
                                GRKAlbum * album = [GRKAlbum albumWithId:albumId andName:albumName andCount:count  andDates:nil];
                                
+                               NSString *albumType = @"";
+                               
+                               switch (type) {
+                                   case ALAssetsGroupPhotoStream:
+                                       albumType = @"Photo Stream";
+                                       break;
+                                   case ALAssetsGroupEvent:
+                                       albumType = @"Event";
+                                       break;
+                                   case ALAssetsGroupFaces:
+                                       albumType = @"Faces";
+                                       break;
+                                   case ALAssetsGroupAlbum:
+                                       albumType = @"Album";
+                                       break;
+                                   case ALAssetsGroupLibrary:
+                                       break;
+                                   case ALAssetsGroupSavedPhotos:
+                                       break;
+                                       
+                                   default:
+                                       NSLog(@">>>>>>>>>>>>>>> skip album with type %d", (int)type);
+                                       break;
+                               }
+                               
+                               album.albumType = albumType;
                                // add the GRKAlbum to the result dictionary
                                [albums addObject:album];
-                               
                                // keep a reference to the group for the albumId
                                [assetsGroupsById setObject:group forKey:albumId];
                                
@@ -294,7 +325,7 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
         
         NSException* exception = [NSException
                                   exceptionWithName:@"numberOfPhotosPerPageTooHigh"
-                                  reason:[NSString stringWithFormat:@"The number of photos per page you asked (%d) is too high", numberOfPhotosPerPage]
+                                  reason:[NSString stringWithFormat:@"The number of photos per page you asked (%d) is too high", (int)numberOfPhotosPerPage]
                                   userInfo:nil];
         @throw exception;
     }
@@ -351,8 +382,7 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
     [self incrementQueriesCount];
     cancelAllFlag = NO;
     
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-       
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
         
         // the array of GRKPhoto for this page of the album
         __block NSMutableArray * newPhotos = [NSMutableArray array];
@@ -384,9 +414,8 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
                                                  
                                              }
                                              
-                                             GRKPhoto * photo = [me photoFromALAsset:result atIndex:index];
-                                             if (photo.photoId)
-                                                 [newPhotos addObject:photo];
+                                             GRKPhoto * photo = [me defaultPhotoFromALAsset:result atIndex:index];
+                                             [newPhotos addObject:photo];
                                              
                                          }];
         
@@ -452,6 +481,19 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
         dispatch_async_on_main_queue(errorBlock, [self errorForFillCoverOperation]);
        
         return;
+    }
+    
+    if (groupForThisAlbum.posterImage != nil) {
+        
+        GRKPhoto *photo = [[GRKPhoto alloc] init];
+        photo.thumbnail = [UIImage imageWithCGImage:groupForThisAlbum.posterImage];
+        
+        album.coverPhoto = photo;
+        
+        dispatch_async_on_main_queue(completeBlock, album);
+        
+        return;
+        
     }
     
     
@@ -548,7 +590,7 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
 
     // if retrieving the photoId from the asset failed, let's build a default photoId from the index
     if ( [photoId isEqualToString:@""] )
-    	photoId = [NSString stringWithFormat:@"%d", index];
+    	photoId = [NSString stringWithFormat:@"%d", (int)index];
     
     NSDate * dateTaken = [asset valueForProperty:ALAssetPropertyDate];
     NSMutableDictionary * dates = [NSMutableDictionary dictionary];
@@ -577,7 +619,8 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
         
         GRKImage * image = [self imageFromALAssetRepresentation:representation isOriginal:[UTI isEqualToString:defaultRepresentationUTI]];
         
-        [images addObject:image];
+        if (image != nil)
+            [images addObject:image];
         
     }
     
@@ -586,8 +629,80 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
                                    andName:nil
                                  andImages:images
                        andDates:dates];
+    
+    
     return photo;
     
+}
+
+-(GRKPhoto*) defaultPhotoFromALAsset:(ALAsset *)asset atIndex:(NSUInteger)index;
+{
+    
+    NSString *photoId = @"";
+    NSURL *photoURL = nil;
+    
+    GRKPhoto * photo = nil;
+    
+    if (asset.defaultRepresentation) {
+        
+        photoURL = [[asset defaultRepresentation] url];
+        NSString * assetsURLString = [photoURL absoluteString];
+        
+        // let's retrieve the id in two times.
+        // First, let's truncate the string to something similar to : BFFEB67F-0212-4CB3-844A-D14C0A3FA69F&ext=JPG
+        NSString * firstDelimiter = @"id=";
+        NSRange rangeOfFirstDelimiter = [assetsURLString rangeOfString:firstDelimiter];
+        if ( rangeOfFirstDelimiter.location != NSNotFound ) {
+            
+            NSUInteger indexOfFirstCharacterOfId = rangeOfFirstDelimiter.location + rangeOfFirstDelimiter.length;
+            assetsURLString = [assetsURLString substringFromIndex:indexOfFirstCharacterOfId];
+            
+            // Now, let's get the substring until the "&ext=???" part
+            NSString * secondDelimiter = @"&ext";
+            NSRange rangeOfSecondDelimiter = [assetsURLString rangeOfString:secondDelimiter];
+            NSUInteger indexOfSecondDelimiter = rangeOfSecondDelimiter.location;
+            
+            if ( indexOfSecondDelimiter != NSNotFound ){
+                photoId = [assetsURLString substringToIndex:indexOfSecondDelimiter];
+            }
+            
+        }
+        
+    }
+    
+    NSDate * dateTaken = [asset valueForProperty:ALAssetPropertyDate];
+    NSMutableDictionary * dates = [NSMutableDictionary dictionary];
+    if ( dateTaken != nil )
+        [dates setObject:dateTaken forKey:kGRKPhotoDatePropertyDateTaken];
+    
+    if ([photoId length] == 0)
+        photoId = [NSString stringWithFormat:@"%d", (int)index];
+    
+    if (photoURL) {
+        
+        GRKImage *image = [GRKImage imageWithURL:photoURL andWidth:0 andHeight:0 isOriginal:YES];
+        
+        photo = [GRKPhoto photoWithId:photoId
+                           andCaption:nil
+                              andName:nil
+                            andImages:@[image]
+                             andDates:dates];
+        
+    } else {
+        
+        photo = [GRKPhoto photoWithId:photoId
+                           andCaption:nil
+                              andName:nil
+                            andImages:@[]
+                             andDates:dates];
+        
+    }
+    
+    if (asset.thumbnail)
+        photo.thumbnail = [UIImage imageWithCGImage:asset.thumbnail];
+    
+    
+    return photo;
 }
 
 /** Build and return a GRKImage from an ALAssetRepresentation.
@@ -602,14 +717,40 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
 
     NSDictionary * metadata = [representation metadata];
     
-    NSNumber * width = [metadata objectForKey:@"PixelWidth"];
-    NSNumber * height = [metadata objectForKey:@"PixelHeight"];
-    NSURL * imageURL = [NSURL URLWithString:[[representation url] absoluteString]];
+    NSUInteger width;
+    NSUInteger height;
+    
+    @try {
+        width = [[metadata objectForKey:@"PixelWidth"] unsignedIntegerValue];
+        height = [[metadata objectForKey:@"PixelHeight"] unsignedIntegerValue];
+    }
+    @catch (NSException *exception) {
+        width = 0;
+        height = 0;
+    }
+    @finally {
+        
+    }
+    
+    NSURL * imageURL;
+    
+    @try {
+        imageURL = [NSURL URLWithString:[[representation url] absoluteString]];
+    }
+    @catch (NSException *exception) {
+        imageURL = nil;
+    }
+    @finally {
+        
+    }
+    
+    if (imageURL == nil)
+        return nil;
     
     GRKImage * image = [GRKImage imageWithURL:imageURL
-                                   andWidth:[width intValue] 
-                                  andHeight:[height intValue] 
-                                 isOriginal:isOriginal];
+                                     andWidth:width
+                                    andHeight:height
+                                   isOriginal:isOriginal];
     return image;
     
 }
@@ -656,6 +797,11 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
     NSString * photoId = [assetsURLString substringToIndex:indexOfSecondDelimiter];
     
     return photoId;
+}
+
+- (NSUInteger)numberOfPhotosPerPage
+{
+    return kGRKMaximumNumberOfPhotosPerPage - 1;
 }
 
 

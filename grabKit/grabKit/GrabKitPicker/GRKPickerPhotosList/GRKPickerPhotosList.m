@@ -27,11 +27,13 @@
 #import "GRKPickerThumbnailManager.h"
 #import "GRKPickerViewController.h"
 #import "GRKPickerViewController+privateMethods.h"
-
+#import "MBProgressHUD.h"
 
 
 // How many photos the grabber can load at a time
-NSUInteger kNumberOfPhotosPerPage = 32;
+// We don't need kNumberofPhotosPerPage anymore.
+// this value is variant for each service grabbers.
+// NSUInteger kNumberOfPhotosPerPage = 32;
 NSUInteger kMaximumNumberOfPhotosToLoadAtSameTime = 5;
 
 NSUInteger kCellWidth = 75;
@@ -233,10 +235,12 @@ NSUInteger kCellHeight = 75;
     
     
     [self markPageIndexAsLoading:pageIndex];
+    
+    NSUInteger numberOfPhotosPerPage = [_grabber numberOfPhotosPerPage];
         
     [_grabber fillAlbum:_album
   withPhotosAtPageIndex:pageIndex
-withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
+withNumberOfPhotosPerPage:numberOfPhotosPerPage
        andCompleteBlock:^(NSArray *results) {
            
 
@@ -289,8 +293,8 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
                
                NSMutableArray * indexPathsToReload = [NSMutableArray array];
                
-               int start = pageIndex * kNumberOfPhotosPerPage;
-               int end = (pageIndex+1) * kNumberOfPhotosPerPage;
+               NSUInteger start = pageIndex * numberOfPhotosPerPage;
+               NSUInteger end = (pageIndex+1) * numberOfPhotosPerPage;
                
            
 //               for ( int i = start; i < end && i < _album.count; i++ ){
@@ -425,6 +429,21 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
     
 }
 
+-(void)showHUD {
+    
+    MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    hud.mode = MBProgressHUDModeIndeterminate;
+    
+    hud.labelText = GRK_i18n(@"GRK_ALBUMS_LIST_HUD_LOADING", @"Loading ...");
+    
+}
+
+-(void)hideHUD {
+    
+    
+    [MBProgressHUD  hideHUDForView:self.view animated:YES];
+    
+}
 
 -(void) setState:(GRKPickerPhotosListState)newState {
  
@@ -482,6 +501,9 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
     
     [_indexesOfPagesToLoad removeObject:[NSNumber numberWithInt:(int)pageIndex]];
     
+    if (pageIndex == 0 && [_grabber.serviceName isEqualToString:@"device"])
+        [self showHUD];
+    
 }
 
 -(void) markPageIndexAsLoaded:(NSUInteger)pageIndex;{
@@ -491,6 +513,9 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
     [_indexesOfLoadedPages addObject:[NSNumber numberWithInt:(int)pageIndex]];
     [_indexesOfLoadingPages removeObject:[NSNumber numberWithInt:(int)pageIndex]];
     [_indexesOfPagesToLoad removeObject:[NSNumber numberWithInt:(int)pageIndex]];
+    
+    if (pageIndex == 0 && [_grabber.serviceName isEqualToString:@"device"])
+        [self hideHUD];
 }
 
 
@@ -570,66 +595,72 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
 
 -(void) prepareCell:(GRKPickerPhotosListThumbnail *)cell fromCollectionView:(UICollectionView*)collectionView atIndexPath:(NSIndexPath*)indexPath withPhoto:(GRKPhoto*)photo  {
     
-        NSURL * thumbnailURL = nil;
+    if (photo.thumbnail) {
+        [cell updateThumbnailWithImage:photo.thumbnail animated:NO];
+        return;
+    }
+    
+    NSURL * thumbnailURL = nil;
+    
+    for( GRKImage * image in [photo imagesSortedByHeight] ){
         
-        for( GRKImage * image in [photo imagesSortedByHeight] ){
+        // If the imageView for thumbnails is 75px wide, we need images with both dimensions greater or equal to 2*75px, for a perfect result on retina displays
+        if ( image.width >= kCellWidth*2 && image.height >= kCellHeight*2 ) {
             
-            // If the imageView for thumbnails is 75px wide, we need images with both dimensions greater or equal to 2*75px, for a perfect result on retina displays
-            if ( image.width >= kCellWidth*2 && image.height >= kCellHeight*2 ) {
+            thumbnailURL = image.URL;
+            
+            // Once we have found the first image bigger than the thumbnail, break the loop
+            break;
+        }
+    }
+    
+    
+    if (thumbnailURL == nil) {
+        
+        [cell updateThumbnailWithImage:nil animated:NO];
+        
+    }
+    
+    // Try to retreive the thumbnail from the cache first ...
+    UIImage * cachedThumbnail = [[GRKPickerThumbnailManager sharedInstance] cachedThumbnailForURL:thumbnailURL andSize:CGSizeMake(150, 150)];
+    
+    if ( cachedThumbnail == nil ) {
+        
+        // If it hasn't been downloaded yet, let's do it
+        [[GRKPickerThumbnailManager sharedInstance] downloadThumbnailAtURL:thumbnailURL forThumbnailSize:CGSizeMake(150, 150) withCompleteBlock:^( UIImage *image, BOOL retrievedFromCache ) {
+            
+            if ( image != nil ){
                 
-                thumbnailURL = image.URL;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    
+                    /* do not do that :
+                     [cell updateThumbnailWithImage:image animated:NO];
+                     
+                     This block is performed asynchronously.
+                     During the download of the image, the given cell may have been dequeued and reused, so we would be updating the wrong cell.
+                     Do this instead :
+                     */
+                    
+                    GRKPickerPhotosListThumbnail * cellToUpdate = (GRKPickerPhotosListThumbnail *)[collectionView cellForItemAtIndexPath:indexPath];
+                    [cellToUpdate updateThumbnailWithImage:image animated: ! retrievedFromCache ];
+                    
+                });
                 
-                // Once we have found the first image bigger than the thumbnail, break the loop
-                break;
             }
-        }
+            
+            
+        } andErrorBlock:^(NSError *error) {
+            
+            // nothing to do, fail silently
+            
+        }];
         
-        // Try to retreive the thumbnail from the cache first ...
-        UIImage * cachedThumbnail = [[GRKPickerThumbnailManager sharedInstance] cachedThumbnailForURL:thumbnailURL andSize:CGSizeMake(150, 150)];
-
-        if ( cachedThumbnail == nil ) {
-            
-            // If it hasn't been downloaded yet, let's do it
-            [[GRKPickerThumbnailManager sharedInstance] downloadThumbnailAtURL:thumbnailURL
-                                                             forThumbnailSize:CGSizeMake(150, 150)
-                                                            withCompleteBlock:^( UIImage *image, BOOL retrievedFromCache ) {
-                                                                
-                                                                if ( image != nil ){
-                                                                    
-                                                                    dispatch_async(dispatch_get_main_queue(), ^{
-                                                                        
-                                                                        /* do not do that :
-                                                                         [cell updateThumbnailWithImage:image animated:NO];
-                                                                         
-                                                                         This block is performed asynchronously.
-                                                                         During the download of the image, the given cell may have been dequeued and reused, so we would be updating the wrong cell.
-                                                                         Do this instead :
-                                                                         */
-                                                                        
-                                                                        GRKPickerPhotosListThumbnail * cellToUpdate = (GRKPickerPhotosListThumbnail *)[collectionView cellForItemAtIndexPath:indexPath];
-                                                                        [cellToUpdate updateThumbnailWithImage:image animated: ! retrievedFromCache ];
-                                                                        
-                                                                    });
-                                                                    
-                                                                }
-                                                                
-                                                                
-                                                            } andErrorBlock:^(NSError *error) {
-                                                                
-                                                                // nothing to do, fail silently
-                                                                
-                                                            }];
-            
-            
-        }else {
-            
-            // else, just update it
-            [cell updateThumbnailWithImage:cachedThumbnail animated:NO];
-        }
-    
-       
-
-    
+        
+    } else {
+        
+        // else, just update it
+        [cell updateThumbnailWithImage:cachedThumbnail animated:NO];
+    }
 }
 
 
@@ -662,7 +693,7 @@ withNumberOfPhotosPerPage:kNumberOfPhotosPerPage
         
     } else {
         
-        int pageOfThisCell = ceil( indexPath.row / kNumberOfPhotosPerPage );
+        int pageOfThisCell = ceil( indexPath.row / [_grabber numberOfPhotosPerPage] );
         
 //        NSLog(@"nil : %d", indexPath.item);
         

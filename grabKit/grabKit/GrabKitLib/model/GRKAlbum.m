@@ -58,13 +58,22 @@ GRKAlbumDateProperty * const kGRKAlbumDatePropertyDateUpdated = @"kGRKAlbumDateP
 		_photosIds = [NSMutableArray arrayWithCapacity:_count];
         
     	_dates = [NSMutableDictionary dictionaryWithDictionary:dates];
+        
+        _albumType = nil;
 
     } 
     
     return self;
 }
 
-
+- (void) dealloc
+{
+#if DEBUG
+    NSLog(@"Album is being deallocated.");
+#endif
+    _photos = nil;
+    _photosIds = nil;
+}
 
 #pragma mark -
 #pragma photos getters

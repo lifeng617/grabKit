@@ -28,6 +28,7 @@
 
 #import "AsyncURLConnection.h"
 
+#import "GRKAlbum+modify.h"
 
 
 static NSString *loadMoreCellIdentifier = @"loadMoreCell";
@@ -96,7 +97,7 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         [services addObject:dropbox];
 #endif
         
-        _grabber = [[GRKDeviceGrabber alloc] init];
+        _grabber = nil;
         _albums = [[NSMutableArray alloc] init];
         _lastLoadedPageIndex = 0;
         allAlbumsGrabbed = NO;
@@ -391,13 +392,43 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
 {
     [super viewDidAppear:animated];
     
-    
-    if ( state != GRKPickerAlbumsListStateInitial )
-        return;
-    
-    
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(didTouchCancelButton)];
     
+}
+
+- (void) unloadAssetAlbums
+{
+    [_grabber cancelAll];
+    _grabber = nil;
+    
+    for (GRKAlbum *album in _albums) {
+        [album removeObserver:self forKeyPath:@"count"];
+        [album clear];
+    }
+    
+    [_albums removeAllObjects];
+    [self.tableView reloadData];
+    
+    [self setState:GRKPickerAlbumsListStateInitial];
+    
+    RESET_OPERATIONS_COUNT
+}
+
+- (void) loadAssetAlbums
+{
+    _lastLoadedPageIndex = 0;
+    allAlbumsGrabbed = NO;
+    
+    for (GRKAlbum *album in _albums) {
+        [album removeObserver:self forKeyPath:@"count"];
+    }
+    [_albums removeAllObjects];
+    
+    [self.tableView reloadData];
+    
+    
+    if (!_grabber)
+        _grabber = [[GRKDeviceGrabber alloc] init];
     
     [self setState:GRKPickerAlbumsListStateConnecting];
     
@@ -446,7 +477,6 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         });
         
     }
-    
     
 }
 
@@ -552,6 +582,11 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     
     if ( album.coverPhoto == nil && [album.coverPhoto.images count] == 0 )
         return;
+    
+    if (album.coverPhoto.thumbnail != nil) {
+        [cell updateThumbnailWithImage:album.coverPhoto.thumbnail animated:NO];
+        return;
+    }
     
     
     NSURL * thumbnailURL = nil;
@@ -957,7 +992,9 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
         return;
     
     
-    [self loadAlbumsAtPageIndex:_lastLoadedPageIndex withNumberOfAlbumsPerPage:kNumberOfAlbumsPerPage andNumberOfAllowedRetries:kMaximumRetriesCount];
+//    [self loadAlbumsAtPageIndex:_lastLoadedPageIndex withNumberOfAlbumsPerPage:kNumberOfAlbumsPerPage andNumberOfAllowedRetries:kMaximumRetriesCount];
+    [self loadAlbumsAtPageIndex:_lastLoadedPageIndex withNumberOfAlbumsPerPage:kGRKMaximumNumberOfAlbumsPerPage - 1 andNumberOfAllowedRetries:kMaximumRetriesCount];
+    
     
 }
 
@@ -985,7 +1022,8 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
                                 
                                 
                                 // Update the state. the tableView is reloaded in this method.
-                                if ( [results count] < kNumberOfAlbumsPerPage ){
+//                                if ( [results count] < kNumberOfAlbumsPerPage ){
+                                if ( [results count] < kGRKMaximumNumberOfAlbumsPerPage - 1 ) {
                                     allAlbumsGrabbed = YES;
                                     [self setState:GRKPickerAlbumsListStateAllAlbumsGrabbed];
                                 } else {

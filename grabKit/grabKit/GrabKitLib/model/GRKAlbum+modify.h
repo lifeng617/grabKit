@@ -60,7 +60,7 @@
  */
 -(void) addDate:(NSDate*)newDate forProperty:(GRKAlbumDateProperty*)dateProperty;
 
-
+-(void) clear;
 
 
 

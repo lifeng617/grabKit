@@ -35,6 +35,21 @@
 #import "GRKDropboxManager.h"
 #import "EGOCache.h"
 
+@interface MyAssetLibrary : ALAssetsLibrary
+
+@end
+
+@implementation MyAssetLibrary
+
+#if DEBUG
+- (void) dealloc
+{
+    NSLog(@"Asset Library is being deallocated");
+}
+#endif
+
+@end
+
 //#define USE_EGOCACHE
 
 @interface UIImage (FixOrientation)
@@ -71,7 +86,6 @@ EGOCache * sharedThumbnailCache = nil;
 #else
 NSCache * sharedThumbnailCache = nil;
 #endif
-EGOCache * sharedPhotoCache = nil;
 
 // Singleton of the current class
 GRKPickerThumbnailManager * sharedGRKPickerThumbnailManager = nil;
@@ -257,7 +271,7 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     // Special case for the assets images
     if ( [[thumbnailURL absoluteString] hasPrefix:@"assets-library://"] ){
         
-        ALAssetsLibrary* library = [[ALAssetsLibrary alloc] init];
+        MyAssetLibrary* library = [[MyAssetLibrary alloc] init];
         [library assetForURL:thumbnailURL resultBlock:^(ALAsset *asset) {
             
             // You can also load a "fullResolutionImage", but it's heavy ...
@@ -268,28 +282,34 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
                 
                 // we retrieve the thumbnail only if the asset is download in local space.
                 
-                if (CGSizeEqualToSize(thumbnailSize, CGSizeZero)) {
-                    ALAssetRepresentation *representation = [asset defaultRepresentation];
-                    thumbnailImage = [UIImage imageWithCGImage:representation.fullResolutionImage scale:1.0 orientation:(UIImageOrientation)representation.orientation];
-                    thumbnailImage = [thumbnailImage normalizedImage];
-                } else {
-                    CGImageRef imgRef = [asset thumbnail];
-                    thumbnailImage = [UIImage imageWithCGImage:imgRef];
+                @autoreleasepool {
+                    if (CGSizeEqualToSize(thumbnailSize, CGSizeZero)) {
+                        ALAssetRepresentation *representation = [asset defaultRepresentation];
+                        CGImageRef imgRef = representation.fullResolutionImage;
+                        thumbnailImage = [UIImage imageWithCGImage:imgRef scale:1.0 orientation:(UIImageOrientation)representation.orientation];
+                        thumbnailImage = [thumbnailImage normalizedImage];
+                    } else {
+                        CGImageRef imgRef = [asset thumbnail];
+                        thumbnailImage = [UIImage imageWithCGImage:imgRef];
+                    }
                 }
                 
-                [self cacheThumbnail:thumbnailImage forURL:thumbnailURL andSize:thumbnailSize];
+                
+                
+                // we don't need to cache the ALAsset's thumbnail anymore.
+                // [self cacheThumbnail:thumbnailImage forURL:thumbnailURL andSize:thumbnailSize];
                 
             }
             
             if ( completeBlock != nil ){
                 
-                completeBlock( thumbnailImage, NO );
+                dispatch_async_on_main_queue(completeBlock, thumbnailImage, NO);
                 
             }
             
         } failureBlock:^(NSError *error) {
             
-            if ( errorBlock ) errorBlock(error);
+            if ( errorBlock ) dispatch_async_on_main_queue(errorBlock, error);
             
         }];
         
