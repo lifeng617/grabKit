@@ -93,6 +93,9 @@ GRKPickerThumbnailManager * sharedGRKPickerThumbnailManager = nil;
 NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
 
 @interface GRKPickerThumbnailManager()
+{
+    ALAssetsLibrary *_assetsLibrary;
+}
     -(void) downloadNextThumbnail;
     -(void) cancelAllConnections;
 @end
@@ -122,11 +125,20 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
         
         thumbnailsQueue = [[NSMutableArray alloc] init] ;
         connections =  [[NSMutableArray alloc] init];
+        
+        _assetsLibrary = nil;
     }
     
     return self;
 }
 
+- (ALAssetsLibrary *)assetLibrary
+{
+    if ( ! _assetsLibrary )
+        _assetsLibrary = [[ALAssetsLibrary alloc] init];
+    
+    return _assetsLibrary;
+}
 
 #ifdef USE_EGOCACHE
 +(EGOCache *) thumbnailCache {
@@ -271,7 +283,8 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     // Special case for the assets images
     if ( [[thumbnailURL absoluteString] hasPrefix:@"assets-library://"] ){
         
-        MyAssetLibrary* library = [[MyAssetLibrary alloc] init];
+        
+        ALAssetsLibrary *library = [self assetLibrary];
         [library assetForURL:thumbnailURL resultBlock:^(ALAsset *asset) {
             
             // You can also load a "fullResolutionImage", but it's heavy ...
@@ -462,6 +475,8 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     }
     
     [connections removeAllObjects];
+    
+    _assetsLibrary = nil;
 }
 
 -(void) removeAllURLsOfThumbnailsToDownload {

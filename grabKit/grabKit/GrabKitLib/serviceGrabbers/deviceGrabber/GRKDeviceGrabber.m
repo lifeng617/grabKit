@@ -226,7 +226,6 @@ static NSString *kGRKServiceNameDevice = @"device";
                                }
                                
                                ALAssetsGroupType type = [[group valueForProperty:ALAssetsGroupPropertyType] intValue];
-                               
                                if (type == ALAssetsGroupPhotoStream)
                                    return;
                                
