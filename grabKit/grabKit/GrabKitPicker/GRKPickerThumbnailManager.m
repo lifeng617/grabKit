@@ -300,7 +300,6 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
                         ALAssetRepresentation *representation = [asset defaultRepresentation];
                         CGImageRef imgRef = representation.fullResolutionImage;
                         thumbnailImage = [UIImage imageWithCGImage:imgRef scale:1.0 orientation:(UIImageOrientation)representation.orientation];
-                        thumbnailImage = [thumbnailImage normalizedImage];
                     } else {
                         CGImageRef imgRef = [asset thumbnail];
                         thumbnailImage = [UIImage imageWithCGImage:imgRef];

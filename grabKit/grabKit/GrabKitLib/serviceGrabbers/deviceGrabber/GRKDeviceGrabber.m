@@ -669,10 +669,11 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
         
     }
     
-    NSDate * dateTaken = [asset valueForProperty:ALAssetPropertyDate];
-    NSMutableDictionary * dates = [NSMutableDictionary dictionary];
-    if ( dateTaken != nil )
-        [dates setObject:dateTaken forKey:kGRKPhotoDatePropertyDateTaken];
+//    NSDate * dateTaken = [asset valueForProperty:ALAssetPropertyDate];
+//    NSMutableDictionary * dates = [NSMutableDictionary dictionary];
+//    if ( dateTaken != nil )
+//        [dates setObject:dateTaken forKey:kGRKPhotoDatePropertyDateTaken];
+    NSDictionary *dates = @{};
     
     if ([photoId length] == 0)
         photoId = [NSString stringWithFormat:@"%d", (int)index];
@@ -697,8 +698,10 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
         
     }
     
-    if (asset.thumbnail)
-        photo.thumbnail = [UIImage imageWithCGImage:asset.thumbnail];
+    photo.asset = asset;
+    
+//    if (asset.thumbnail)
+//        photo.thumbnail = [UIImage imageWithCGImage:asset.thumbnail];
     
     
     return photo;

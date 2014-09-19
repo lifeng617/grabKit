@@ -600,6 +600,12 @@ withNumberOfPhotosPerPage:numberOfPhotosPerPage
         return;
     }
     
+    if (photo.asset && photo.asset.thumbnail) {
+        CGImageRef thumbnail = photo.asset.thumbnail;
+        [cell updateThumbnailWithImage:[UIImage imageWithCGImage:thumbnail] animated:NO];
+        return;
+    }
+    
     NSURL * thumbnailURL = nil;
     
     for( GRKImage * image in [photo imagesSortedByHeight] ){
@@ -736,7 +742,7 @@ withNumberOfPhotosPerPage:numberOfPhotosPerPage
 	GRKPhoto * selectedPhoto =  [self photoForCellAtIndexPath:indexPath];
     
     // Only allow selection of items for already-loaded photos.
-    if ( selectedPhoto == nil  || [selectedPhoto originalImage] == nil){
+    if ( selectedPhoto == nil  ||  ([selectedPhoto originalImage] == nil && selectedPhoto.asset == nil) ){
         return NO;
     }
     

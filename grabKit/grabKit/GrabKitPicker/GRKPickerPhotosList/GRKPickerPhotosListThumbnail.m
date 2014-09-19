@@ -151,6 +151,7 @@ static UIImage * thumbnailPlaceholderImage;
     } else {
             
         // UI updates must be done on the main thread
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             expandButton.alpha = showExpandButton ? 1 : 0;
             [thumbnailImageView setImage:image];
