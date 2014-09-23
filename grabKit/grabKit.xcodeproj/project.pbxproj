@@ -418,7 +418,6 @@
 		D8C9E8D0199AEB2F00FF9CDD /* thumbnail_expand.png in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8CE199AEB2F00FF9CDD /* thumbnail_expand.png */; };
 		D8C9E8D1199AEB2F00FF9CDD /* thumbnail_expand@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2x.png */; };
 		D8C9E8EA199AF32F00FF9CDD /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */; };
-		D8C9E8EF199AF36400FF9CDD /* FacebookSDKResources.bundle in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8EC199AF36400FF9CDD /* FacebookSDKResources.bundle */; };
 		D8C9E8F0199AF36400FF9CDD /* FBUserSettingsViewResources.bundle in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8ED199AF36400FF9CDD /* FBUserSettingsViewResources.bundle */; };
 /* End PBXBuildFile section */
 
@@ -855,7 +854,6 @@
 		D8C9E8CE199AEB2F00FF9CDD /* thumbnail_expand.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = thumbnail_expand.png; sourceTree = "<group>"; };
 		D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "thumbnail_expand@2x.png"; sourceTree = "<group>"; };
 		D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FacebookSDK.framework; path = ../../../Frameworks/FacebookSDK.framework; sourceTree = "<group>"; };
-		D8C9E8EC199AF36400FF9CDD /* FacebookSDKResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = FacebookSDKResources.bundle; sourceTree = "<group>"; };
 		D8C9E8ED199AF36400FF9CDD /* FBUserSettingsViewResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = FBUserSettingsViewResources.bundle; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1752,7 +1750,6 @@
 		D8C9E8EB199AF36400FF9CDD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				D8C9E8EC199AF36400FF9CDD /* FacebookSDKResources.bundle */,
 				D8C9E8ED199AF36400FF9CDD /* FBUserSettingsViewResources.bundle */,
 			);
 			name = Resources;
@@ -2005,7 +2002,7 @@
 			name = GrabKitTests;
 			productName = GrabKitTests;
 			productReference = 5FC592F816FCDAA500ABDF45 /* GrabKitTests.octest */;
-			productType = "com.apple.product-type.bundle";
+			productType = "com.apple.product-type.bundle.ocunit-test";
 		};
 		5FD3999615BF1E2B0063542C /* GrabKitLib */ = {
 			isa = PBXNativeTarget;
@@ -2095,7 +2092,6 @@
 				D8C9E8F0199AF36400FF9CDD /* FBUserSettingsViewResources.bundle in Resources */,
 				5F990C3A1702DAC200B89A7B /* picasa.png in Resources */,
 				5F990C3B1702DAC200B89A7B /* thumbnail_placeholder.png in Resources */,
-				D8C9E8EF199AF36400FF9CDD /* FacebookSDKResources.bundle in Resources */,
 				5F990C3C1702DAC200B89A7B /* thumbnail_placeholder@2X.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
