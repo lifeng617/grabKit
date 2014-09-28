@@ -185,13 +185,13 @@
             
             [_collectionView reloadData];
             
-            if ( !_viewLoaded) {
-                
-                [_collectionView setContentOffset:CGPointMake(0, CGFLOAT_MAX)];
-                
-                _viewLoaded = YES;
-                
-            }
+//            if ( !_viewLoaded) {
+//                
+//                [_collectionView setContentOffset:CGPointMake(0, CGFLOAT_MAX)];
+//                
+//                _viewLoaded = YES;
+//                
+//            }
             
             
         }

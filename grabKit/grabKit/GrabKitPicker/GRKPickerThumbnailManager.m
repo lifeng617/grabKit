@@ -29,6 +29,7 @@
 #import "GRKPickerViewController.h"
 #import "GRKPickerViewController+privateMethods.h"
 #import <AssetsLibrary/AssetsLibrary.h>
+#import <Photos/Photos.h>
 #import "GrabKit.h"
 #import "NSString+MD5.h"
 
@@ -208,7 +209,16 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     return [NSString stringWithFormat:@"%@_%fx%f", [url absoluteString], size.width, size.height];
 }
 
-
+-(UIImage*)cachedThumbnailForGRKImage:(GRKImage*)grkImage andSize:(CGSize)thumbnailSize
+{
+    if (grkImage.URL)
+    {
+        return [self cachedThumbnailForURL:grkImage.URL andSize:thumbnailSize];
+    }
+    
+    
+    return nil;
+}
 
 -(UIImage*)cachedThumbnailForURL:(NSURL*)thumbnailURL andSize:(CGSize)thumbnailSize {
     
@@ -248,13 +258,59 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     
 }
 
--(void) downloadPhotoAtURL:(NSURL*)photoURL
-         withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock
-             andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock
+-(void) downloadPhotoWithGRKImage:(GRKImage *)grkImage
+                withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock
+                    andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock
 {
-    
-    [self downloadThumbnailAtURL:photoURL forThumbnailSize:CGSizeZero withCompleteBlock:completeBlock andErrorBlock:errorBlock];
-    
+    if (grkImage.URL)
+    {
+        [self downloadThumbnailAtURL:grkImage.URL forThumbnailSize:CGSizeZero withCompleteBlock:completeBlock andErrorBlock:errorBlock];
+    }
+    else if (grkImage.asset && [grkImage.asset isKindOfClass:[PHAsset class]])
+    {
+        
+        PHImageRequestOptions *imageOptions = [[PHImageRequestOptions alloc] init];
+        imageOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+        imageOptions.networkAccessAllowed = YES;
+        
+        [[PHImageManager defaultManager] requestImageForAsset:grkImage.asset targetSize:PHImageManagerMaximumSize contentMode:PHImageContentModeDefault options:imageOptions resultHandler:^(UIImage *result, NSDictionary *info) {
+            
+            if ( completeBlock != nil ){
+                
+                dispatch_async_on_main_queue(completeBlock, result, NO);
+                
+            }
+            
+        }];
+    }
+}
+
+-(void) downloadThumbnailWithGRKImage:(GRKImage*)grkImage
+                     forThumbnailSize:(CGSize)thumbnailSize
+                    withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock
+                        andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock
+{
+    if (grkImage.URL)
+    {
+        [self downloadThumbnailAtURL:grkImage.URL forThumbnailSize:thumbnailSize withCompleteBlock:completeBlock andErrorBlock:errorBlock];
+    }
+    else if (grkImage.asset && [grkImage.asset isKindOfClass:[PHAsset class]])
+    {
+        
+        PHImageRequestOptions *imageOptions = [[PHImageRequestOptions alloc] init];
+        imageOptions.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
+        imageOptions.networkAccessAllowed = YES;
+        
+        [[PHImageManager defaultManager] requestImageForAsset:grkImage.asset targetSize:thumbnailSize contentMode:PHImageContentModeAspectFill options:imageOptions resultHandler:^(UIImage *result, NSDictionary *info) {
+            
+            if ( completeBlock != nil ){
+                
+                dispatch_async_on_main_queue(completeBlock, result, NO);
+                
+            }
+            
+        }];
+    }
 }
 
 -(void) downloadThumbnailAtURL:(NSURL*)thumbnailURL forThumbnailSize:(CGSize)thumbnailSize withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock {

@@ -56,6 +56,8 @@ typedef void (^GRKPickerThumbnailManagerErrorBlock)(NSError * error);
  
  
 */
+@class GRKImage;
+
 @interface GRKPickerThumbnailManager : NSObject <NSCacheDelegate> {
     
     
@@ -84,6 +86,8 @@ typedef void (^GRKPickerThumbnailManagerErrorBlock)(NSError * error);
  */
 -(UIImage*)cachedThumbnailForURL:(NSURL*)thumbnailURL andSize:(CGSize)thumbnailSize;
 
+-(UIImage*)cachedThumbnailForGRKImage:(GRKImage*)grkImage andSize:(CGSize)thumbnailSize;
+
 /** Download the data at the given url, or retrieves it from cache if it has been previously cached.
  Once the data is available, it is stored in the cache for the given size, and the completeBlock is performed.
  
@@ -98,6 +102,11 @@ typedef void (^GRKPickerThumbnailManagerErrorBlock)(NSError * error);
          withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock
              andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock;
 
+-(void) downloadThumbnailWithGRKImage:(GRKImage*)grkImage
+              forThumbnailSize:(CGSize)thumbnailSize
+             withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock
+                 andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock;
+
 /** Download the data at the given url, or retrieves it from cache if it has been previously cached.
  Once the data is available, it is stored in the cache for the given size, and the completeBlock is performed.
  
@@ -106,7 +115,8 @@ typedef void (^GRKPickerThumbnailManagerErrorBlock)(NSError * error);
  @param completeBlock block to perform with the thumbnail's data
  @param errorBlock error block
  */
--(void) downloadPhotoAtURL:(NSURL*)photoURL
+
+-(void) downloadPhotoWithGRKImage:(GRKImage *)image
              withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock
                  andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock;
 

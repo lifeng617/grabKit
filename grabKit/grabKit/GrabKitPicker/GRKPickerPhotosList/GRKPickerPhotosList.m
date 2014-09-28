@@ -600,20 +600,24 @@ withNumberOfPhotosPerPage:numberOfPhotosPerPage
         return;
     }
     
-    if (photo.asset && photo.asset.thumbnail) {
-        CGImageRef thumbnail = photo.asset.thumbnail;
-        [cell updateThumbnailWithImage:[UIImage imageWithCGImage:thumbnail] animated:NO];
-        return;
+    if (photo.alAsset)
+    {
+        if ([photo.alAsset isKindOfClass:[ALAsset class]] && [photo.alAsset thumbnail])
+        {
+            CGImageRef thumbnail = [photo.alAsset thumbnail];
+            [cell updateThumbnailWithImage:[UIImage imageWithCGImage:thumbnail] animated:NO];
+            return;
+        }
     }
     
-    NSURL * thumbnailURL = nil;
+    GRKImage *thumbnailImage = nil;
     
     for( GRKImage * image in [photo imagesSortedByHeight] ){
         
         // If the imageView for thumbnails is 75px wide, we need images with both dimensions greater or equal to 2*75px, for a perfect result on retina displays
         if ( image.width >= kCellWidth*2 && image.height >= kCellHeight*2 ) {
             
-            thumbnailURL = image.URL;
+            thumbnailImage = image;
             
             // Once we have found the first image bigger than the thumbnail, break the loop
             break;
@@ -621,19 +625,20 @@ withNumberOfPhotosPerPage:numberOfPhotosPerPage
     }
     
     
-    if (thumbnailURL == nil) {
+    if (thumbnailImage == nil) {
         
         [cell updateThumbnailWithImage:nil animated:NO];
+        return;
         
     }
     
     // Try to retreive the thumbnail from the cache first ...
-    UIImage * cachedThumbnail = [[GRKPickerThumbnailManager sharedInstance] cachedThumbnailForURL:thumbnailURL andSize:CGSizeMake(150, 150)];
+    UIImage * cachedThumbnail = [[GRKPickerThumbnailManager sharedInstance] cachedThumbnailForGRKImage:thumbnailImage andSize:CGSizeMake(150, 150)];
     
     if ( cachedThumbnail == nil ) {
         
         // If it hasn't been downloaded yet, let's do it
-        [[GRKPickerThumbnailManager sharedInstance] downloadThumbnailAtURL:thumbnailURL forThumbnailSize:CGSizeMake(150, 150) withCompleteBlock:^( UIImage *image, BOOL retrievedFromCache ) {
+        [[GRKPickerThumbnailManager sharedInstance] downloadThumbnailWithGRKImage:thumbnailImage forThumbnailSize:CGSizeMake(150, 150) withCompleteBlock:^( UIImage *image, BOOL retrievedFromCache ) {
             
             if ( image != nil ){
                 
@@ -742,7 +747,7 @@ withNumberOfPhotosPerPage:numberOfPhotosPerPage
 	GRKPhoto * selectedPhoto =  [self photoForCellAtIndexPath:indexPath];
     
     // Only allow selection of items for already-loaded photos.
-    if ( selectedPhoto == nil  ||  ([selectedPhoto originalImage] == nil && selectedPhoto.asset == nil) ){
+    if ( selectedPhoto == nil  ||  ([selectedPhoto originalImage] == nil && selectedPhoto.alAsset == nil) ){
         return NO;
     }
     

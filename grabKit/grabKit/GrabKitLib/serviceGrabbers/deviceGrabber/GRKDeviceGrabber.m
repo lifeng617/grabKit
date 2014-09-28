@@ -30,6 +30,7 @@
 #import "GRKAlbum+modify.h"
 
 #import "NSIndexSet+pagination.h"
+#import <Photos/Photos.h>
 
 
 static NSString *kGRKServiceNameDevice = @"device";
@@ -84,9 +85,134 @@ static NSString *kGRKServiceNameDevice = @"device";
 
 #pragma mark GRKServiceGrabberProtocol methods
 
+
 /* @see refer to GRKServiceGrabberProtocol documentation
  */
 -(void) albumsOfCurrentUserAtPageIndex:(NSUInteger)pageIndex
+             withNumberOfAlbumsPerPage:(NSUInteger)numberOfAlbumsPerPage
+                      andCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock
+                         andErrorBlock:(GRKErrorBlock)errorBlock
+{
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8)
+    {
+        [self PHAlbumsOfCurrentUserAtPageIndex:pageIndex withNumberOfAlbumsPerPage:numberOfAlbumsPerPage andCompleteBlock:completeBlock andErrorBlock:errorBlock];
+    }
+    else
+    {
+        [self ALAlbumsOfCurrentUserAtPageIndex:pageIndex withNumberOfAlbumsPerPage:numberOfAlbumsPerPage andCompleteBlock:completeBlock andErrorBlock:errorBlock];
+    }
+}
+
+-(void) PHAlbumsOfCurrentUserAtPageIndex:(NSUInteger)pageIndex
+               withNumberOfAlbumsPerPage:(NSUInteger)numberOfAlbumsPerPage
+                        andCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock
+                           andErrorBlock:(GRKErrorBlock)errorBlock
+{
+    if ( numberOfAlbumsPerPage > kGRKMaximumNumberOfAlbumsPerPage ) {
+        
+        NSException* exception = [NSException
+                                  exceptionWithName:@"numberOfAlbumsPerPageTooHigh"
+                                  reason:[NSString stringWithFormat:@"The number of albums per page you asked (%d) is too high", (int)numberOfAlbumsPerPage]
+                                  userInfo:nil];
+        @throw exception;
+    }
+    
+    /* We want to present the "Camera Roll" as first result.
+     This is why, if we're asked for the pageIndex 0,
+     _ First, we retrieve the "Camera Roll" ALAssetsGroup (type ALAssetsGroupSavedPhotos)
+     _ Then, we retrieve all the other groups, minus one (all types of ALAssetsGroup, except ALAssetsGroupSavedPhotos)
+     */
+    
+    
+    if ( pageIndex == 0 ){
+        
+        // The dictionary of albums that will be sent to the caller
+        __block NSMutableArray * albums = [[NSMutableArray alloc] init];
+        
+        [self albumsOfCurrentUserFromIndex:0
+                                   toIndex:0
+                            andGroupsTypes:ALAssetsGroupSavedPhotos
+                          andCompleteBlock:^(NSArray *results) {
+                              
+                              if ( [results count] != 1 ){
+                                  
+                                  if ( errorBlock != nil ){
+                                      
+                                      NSString * errorDomain = [NSString stringWithFormat:@"com.grabKit.%@", _serviceName];
+                                      NSError * error = [NSError errorWithDomain:errorDomain code:404 userInfo:nil];
+                                      errorBlock(error);
+                                  }
+                                  return;
+                              }
+                              
+                              [albums addObject:results[0]];
+                              
+                              [self albumsOfCurrentUserFromIndex:0
+                                                         toIndex:(numberOfAlbumsPerPage>=3)?(numberOfAlbumsPerPage-3):0
+                                                  andGroupsTypes:(ALAssetsGroupAll & ~ALAssetsGroupSavedPhotos)
+                                                andCompleteBlock:^(NSArray *results) {
+                                                    
+                                                    [albums addObjectsFromArray:results];
+                                                    
+                                                    {
+                                                        
+                                                        // Fetch All PHPhotos
+                                                        
+                                                        PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
+                                                        fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:YES]];
+                                                        
+                                                        PHFetchResult *result = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:fetchOptions];
+                                                        
+                                                        NSString * albumName = @"All Photos";
+                                                        NSString * albumId = @"PHALLPhotos";
+                                                        NSUInteger count = [result count];
+                                                        
+                                                        // Build the GRKAlbum
+                                                        GRKAlbum * album = [GRKAlbum albumWithId:albumId andName:albumName andCount:count  andDates:nil];
+                                                        album.albumType = @"All Photos";
+                                                        // add the GRKAlbum to the result dictionary
+                                                        [albums insertObject:album atIndex:0];
+                                                        // keep a reference to the group for the albumId
+                                                        [assetsGroupsById setObject:result forKey:albumId];
+                                                    }
+                                                    
+                                                    dispatch_async_on_main_queue(completeBlock, albums);
+                                                    return;
+                                                    
+                                                } andErrorBlock:^(NSError *error) {
+                                                    
+                                                    if ( errorBlock != nil ){
+                                                        errorBlock(error);
+                                                    }
+                                                    return;
+                                                }];
+                              
+                          } andErrorBlock:^(NSError *error) {
+                              
+                              if ( errorBlock != nil ){
+                                  errorBlock(error);
+                              }
+                              return;
+                          }];
+        
+    } else {
+        
+        [self albumsOfCurrentUserFromIndex:(pageIndex*numberOfAlbumsPerPage)-1
+                                   toIndex:((pageIndex+1)*numberOfAlbumsPerPage)-2
+                            andGroupsTypes:(ALAssetsGroupAll & ~ALAssetsGroupSavedPhotos)
+                          andCompleteBlock:^(NSArray *results) {
+                              
+                              dispatch_async_on_main_queue(completeBlock, results);
+                              return;
+                              
+                          } andErrorBlock:^(NSError *error) {
+                              
+                          }];
+        
+    }
+}
+
+-(void) ALAlbumsOfCurrentUserAtPageIndex:(NSUInteger)pageIndex
               withNumberOfAlbumsPerPage:(NSUInteger)numberOfAlbumsPerPage
                        andCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock 
                           andErrorBlock:(GRKErrorBlock)errorBlock;
@@ -115,46 +241,46 @@ static NSString *kGRKServiceNameDevice = @"device";
         
         [self albumsOfCurrentUserFromIndex:0
                                    toIndex:0
-                              andGroupsTypes:ALAssetsGroupSavedPhotos
-                            andCompleteBlock:^(NSArray *results) {
-                                
-                                if ( [results count] != 1 ){
-                                    
-                                    if ( errorBlock != nil ){
-						
-                                        NSString * errorDomain = [NSString stringWithFormat:@"com.grabKit.%@", _serviceName];
-                                        NSError * error = [NSError errorWithDomain:errorDomain code:404 userInfo:nil];
-                                        errorBlock(error);
-                                    }
-                                    return;
-                                }
-                                
-                                [albums addObject:results[0]];
-                                
-                                [self albumsOfCurrentUserFromIndex:0
-                                                           toIndex:(numberOfAlbumsPerPage>=2)?(numberOfAlbumsPerPage-2):0
-                                                      andGroupsTypes:(ALAssetsGroupAll & ~ALAssetsGroupSavedPhotos)
-                                                    andCompleteBlock:^(NSArray *results) {
-                                                        
-                                                        [albums addObjectsFromArray:results];
-                                                        dispatch_async_on_main_queue(completeBlock, albums);
-                                                        return;
-                                                        
-                                                    } andErrorBlock:^(NSError *error) {
-                                                     
-                                                        if ( errorBlock != nil ){
-                                                            errorBlock(error);
-                                                        }
-                                                        return;
-                                                    }];
-                                
-                            } andErrorBlock:^(NSError *error) {
-                                
-                                if ( errorBlock != nil ){
-	                                errorBlock(error);
-                                }
-                                return;
-                            }];
+                            andGroupsTypes:ALAssetsGroupSavedPhotos
+                          andCompleteBlock:^(NSArray *results) {
+                              
+                              if ( [results count] != 1 ){
+                                  
+                                  if ( errorBlock != nil ){
+                                      
+                                      NSString * errorDomain = [NSString stringWithFormat:@"com.grabKit.%@", _serviceName];
+                                      NSError * error = [NSError errorWithDomain:errorDomain code:404 userInfo:nil];
+                                      errorBlock(error);
+                                  }
+                                  return;
+                              }
+                              
+                              [albums addObject:results[0]];
+                              
+                              [self albumsOfCurrentUserFromIndex:0
+                                                         toIndex:(numberOfAlbumsPerPage>=2)?(numberOfAlbumsPerPage-2):0
+                                                  andGroupsTypes:(ALAssetsGroupAll & ~ALAssetsGroupSavedPhotos)
+                                                andCompleteBlock:^(NSArray *results) {
+                                                    
+                                                    [albums addObjectsFromArray:results];
+                                                    dispatch_async_on_main_queue(completeBlock, albums);
+                                                    return;
+                                                    
+                                                } andErrorBlock:^(NSError *error) {
+                                                    
+                                                    if ( errorBlock != nil ){
+                                                        errorBlock(error);
+                                                    }
+                                                    return;
+                                                }];
+                              
+                          } andErrorBlock:^(NSError *error) {
+                              
+                              if ( errorBlock != nil ){
+                                  errorBlock(error);
+                              }
+                              return;
+                          }];
         
         
         return;
@@ -162,7 +288,7 @@ static NSString *kGRKServiceNameDevice = @"device";
         
         [self albumsOfCurrentUserFromIndex:(pageIndex*numberOfAlbumsPerPage)-1
                                    toIndex:((pageIndex+1)*numberOfAlbumsPerPage)-2
-                              andGroupsTypes:(ALAssetsGroupAll & ~ALAssetsGroupSavedPhotos)
+                              andGroupsTypes:ALAssetsGroupAll
                             andCompleteBlock:^(NSArray *results) {
                                 
                                 dispatch_async_on_main_queue(completeBlock, results);
@@ -312,6 +438,7 @@ static NSString *kGRKServiceNameDevice = @"device";
 }
 
 
+
 /* @see refer to GRKServiceGrabberProtocol documentation
  */
 -(void) fillAlbum:(GRKAlbum *)album
@@ -329,104 +456,140 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
         @throw exception;
     }
 
+    NSObject *group = [assetsGroupsById objectForKey:album.albumId];
     
-    ALAssetsGroup * groupForThisAlbum = [assetsGroupsById objectForKey:album.albumId];
-    if ( groupForThisAlbum == nil ) {
+    if ([group isKindOfClass:[ALAssetsGroup class]]) {
         
+        ALAssetsGroup * groupForThisAlbum = [assetsGroupsById objectForKey:album.albumId];
+        if ( groupForThisAlbum == nil ) {
+            
+            dispatch_async_on_main_queue(errorBlock, [self errorForFillAlbumOperationWithOriginalError:nil]);
+            
+            return;
+        }
+        
+        /*
+         We use the method [ALAssetsGroup enumerateAssetsAtIndexes:options:usingBlock:] to fetch the photos (ALAsset) for an album (ALAssetsGroup)
+         This method takes a NSIndexSet as parameter, that we will build from a NSRange.
+         
+         If we pass to this method a NSIndexSet for ranks over the number of photos of the group, an exception will be thrown ( 'NSRangeException', reason: 'indexSet count or lastIndex must not exceed -numberOfAssets' )
+         
+         so, if :
+         "rank of the last photo to fetch" > "rank of the last photo in album"
+         i.e if :
+         "(page index) * (number of photo per page) + (number of photo per page)" > "number of photos in album"-1
+         
+         Then : we have to fetch from "(page index) * (number of photo per page)" to "rank of the last photo in album"
+         
+         This is what the finalN var is made for, avoiding that way the NSRangeException.
+         */
+        
+        NSUInteger finalNumberOfPhotosPerPage = numberOfPhotosPerPage;
+        NSIndexSet * indexSetAtThisPageIndex;
+        
+        if ( pageIndex*numberOfPhotosPerPage + numberOfPhotosPerPage > album.count ){
+            
+            finalNumberOfPhotosPerPage = MAX(0,album.count - pageIndex*numberOfPhotosPerPage);
+            
+            NSMutableIndexSet * mutableIndexSetAtThisPageIndex = [[NSMutableIndexSet alloc] initWithIndexSet:[NSIndexSet indexSetForPageIndex:pageIndex
+                                                                                                                     withNumberOfItemsPerPage:numberOfPhotosPerPage]];
+            
+            NSInteger numberOfExtraIndexSet = (pageIndex+1)*numberOfPhotosPerPage - album.count;
+            
+            NSIndexSet * indexSetToRemove = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange( (pageIndex+1)*numberOfPhotosPerPage - numberOfExtraIndexSet,
+                                                                                               numberOfExtraIndexSet ) ];
+            
+            [mutableIndexSetAtThisPageIndex removeIndexes:indexSetToRemove];
+            
+            indexSetAtThisPageIndex = [[NSIndexSet alloc] initWithIndexSet:mutableIndexSetAtThisPageIndex];
+            
+        } else {
+            indexSetAtThisPageIndex = [NSIndexSet indexSetForPageIndex:pageIndex withNumberOfItemsPerPage:finalNumberOfPhotosPerPage];
+        }
+        
+        
+        [self incrementQueriesCount];
+        cancelAllFlag = NO;
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+            
+            // the array of GRKPhoto for this page of the album
+            __block NSMutableArray * newPhotos = [NSMutableArray array];
+            __block id me = self;
+            
+            [groupForThisAlbum enumerateAssetsAtIndexes:indexSetAtThisPageIndex options:0 usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
+                
+                // check if the cancelAll flag has been set
+                if ( cancelAllFlag == YES ){
+                    *stop = YES;
+                    [me decrementQueriesCount];
+                    return;
+                }
+                
+                // when enumeration is finished, a nil result is passed to this block
+                if ( result == nil ){
+                    
+                    // add the new photos to the album
+                    [album addPhotos:newPhotos forPageIndex:pageIndex withNumberOfPhotosPerPage:numberOfPhotosPerPage];
+                    
+                    [me decrementQueriesCount];
+                    
+                    // perform the completeBlock
+                    dispatch_async_on_main_queue(completeBlock, newPhotos);
+                    
+                    return;
+                    
+                }
+                
+                GRKPhoto * photo = [me defaultPhotoFromALAsset:result atIndex:index];
+                [newPhotos addObject:photo];
+                
+            }];
+            
+        });
+        
+    }
+    else if ([group isKindOfClass:[PHFetchResult class]])
+    {
+        PHFetchResult *fetchResult = (PHFetchResult *)group;
+        
+        [self incrementQueriesCount];
+        cancelAllFlag = NO;
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+            
+            // the array of GRKPhoto for this page of the album
+            __block NSMutableArray * newPhotos = [NSMutableArray array];
+            __block id me = self;
+            
+            NSUInteger count = [fetchResult count];
+            
+            for (int i = 0; i < count; i ++)
+            {
+                PHAsset *asset = [fetchResult objectAtIndex:i];
+                GRKPhoto * photo = [me defaultPhotoFromPHAsset:asset atIndex:i];
+                [newPhotos addObject:photo];
+            }
+            
+            [album addPhotos:newPhotos forPageIndex:pageIndex withNumberOfPhotosPerPage:numberOfPhotosPerPage];
+            
+            [me decrementQueriesCount];
+            
+            // perform the completeBlock
+            dispatch_async_on_main_queue(completeBlock, newPhotos);
+            
+        });
+    }
+    else
+    {
         dispatch_async_on_main_queue(errorBlock, [self errorForFillAlbumOperationWithOriginalError:nil]);
-        
-        return;
     }
-    
-/*
-     We use the method [ALAssetsGroup enumerateAssetsAtIndexes:options:usingBlock:] to fetch the photos (ALAsset) for an album (ALAssetsGroup)
-     This method takes a NSIndexSet as parameter, that we will build from a NSRange.
-     
-     If we pass to this method a NSIndexSet for ranks over the number of photos of the group, an exception will be thrown ( 'NSRangeException', reason: 'indexSet count or lastIndex must not exceed -numberOfAssets' )
-
-so, if : 
-     "rank of the last photo to fetch" > "rank of the last photo in album"
-i.e if :     
-	"(page index) * (number of photo per page) + (number of photo per page)" > "number of photos in album"-1
-
-Then : we have to fetch from "(page index) * (number of photo per page)" to "rank of the last photo in album"
-
- This is what the finalN var is made for, avoiding that way the NSRangeException.
- */
-    
-    NSUInteger finalNumberOfPhotosPerPage = numberOfPhotosPerPage;
-    NSIndexSet * indexSetAtThisPageIndex;
-    
-    if ( pageIndex*numberOfPhotosPerPage + numberOfPhotosPerPage > album.count ){
-        
-        finalNumberOfPhotosPerPage = MAX(0,album.count - pageIndex*numberOfPhotosPerPage);
-        
-        NSMutableIndexSet * mutableIndexSetAtThisPageIndex = [[NSMutableIndexSet alloc] initWithIndexSet:[NSIndexSet indexSetForPageIndex:pageIndex
-                                                                                                                 withNumberOfItemsPerPage:numberOfPhotosPerPage]];
-        
-        NSInteger numberOfExtraIndexSet = (pageIndex+1)*numberOfPhotosPerPage - album.count;
-        
-        NSIndexSet * indexSetToRemove = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange( (pageIndex+1)*numberOfPhotosPerPage - numberOfExtraIndexSet,
-                                                                                           numberOfExtraIndexSet ) ];
-
-        [mutableIndexSetAtThisPageIndex removeIndexes:indexSetToRemove];
-        
-        indexSetAtThisPageIndex = [[NSIndexSet alloc] initWithIndexSet:mutableIndexSetAtThisPageIndex];
-        
-    } else {
-		indexSetAtThisPageIndex = [NSIndexSet indexSetForPageIndex:pageIndex withNumberOfItemsPerPage:finalNumberOfPhotosPerPage];
-    }
-
-    
-    [self incrementQueriesCount];
-    cancelAllFlag = NO;
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        
-        // the array of GRKPhoto for this page of the album
-        __block NSMutableArray * newPhotos = [NSMutableArray array];
-        __block id me = self;
-        
-        [groupForThisAlbum enumerateAssetsAtIndexes:indexSetAtThisPageIndex
-                                            options:0
-                                         usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
-                                             
-                                             // check if the cancelAll flag has been set
-                                             if ( cancelAllFlag == YES ){
-                                                 *stop = YES;
-                                                 [me decrementQueriesCount];
-                                                 return;
-                                             }
-                                             
-                                             // when enumeration is finished, a nil result is passed to this block
-                                             if ( result == nil ){
-                                                 
-                                                 // add the new photos to the album
-                                                 [album addPhotos:newPhotos forPageIndex:pageIndex withNumberOfPhotosPerPage:numberOfPhotosPerPage];
-                                                 
-                                                 [me decrementQueriesCount];
-                                                 
-                                                 // perform the completeBlock
-                                                 dispatch_async_on_main_queue(completeBlock, newPhotos);
-                                                 
-                                                 return;
-                                                 
-                                             }
-                                             
-                                             GRKPhoto * photo = [me defaultPhotoFromALAsset:result atIndex:index];
-                                             [newPhotos addObject:photo];
-                                             
-                                         }];
-        
-    });
-    
-     
 }
 
 
 
--(void) fillCoverPhotoOfAlbums:(NSArray *)albums 
-              withCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock 
+-(void) fillCoverPhotoOfAlbums:(NSArray *)albums
+              withCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock
                  andErrorBlock:(GRKErrorBlock)errorBlock; {
     
     
@@ -438,15 +601,18 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
     __block int numberOfAlbumsParsed = 0;
     for ( GRKAlbum * album in albums ){
     
-       [self fillCoverPhotoOfAlbum:album 
+       [self fillCoverPhotoOfAlbum:album
                   andCompleteBlock:^(id result) {
-           
-                      [updatedAlbums addObject:result];
-                      numberOfAlbumsParsed++;
                       
-                      if ( numberOfAlbumsParsed == [albums count] ){
+                      if ([updatedAlbums indexOfObject:result] == NSNotFound)
+                      {
+                          [updatedAlbums addObject:result];
+                          numberOfAlbumsParsed++;
                           
-                          dispatch_async_on_main_queue(completeBlock, updatedAlbums);
+                          if ( numberOfAlbumsParsed == [albums count] ){
+                              
+                              dispatch_async_on_main_queue(completeBlock, updatedAlbums);
+                          }
                       }
                       
                       
@@ -471,87 +637,116 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
              andCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock 
                 andErrorBlock:(GRKErrorBlock)errorBlock {
     
+    NSObject *group = [assetsGroupsById objectForKey:album.albumId];
     
-    ALAssetsGroup * groupForThisAlbum = [assetsGroupsById objectForKey:album.albumId];
-
-    if ( groupForThisAlbum == nil ) {
+    if ([group isKindOfClass:[ALAssetsGroup class]])
+    {
+        ALAssetsGroup * groupForThisAlbum = (ALAssetsGroup *)group;
         
-
-        dispatch_async_on_main_queue(errorBlock, [self errorForFillCoverOperation]);
-       
-        return;
-    }
-    
-    if (groupForThisAlbum.posterImage != nil) {
-        
-        GRKPhoto *photo = [[GRKPhoto alloc] init];
-        photo.thumbnail = [UIImage imageWithCGImage:groupForThisAlbum.posterImage];
-        
-        album.coverPhoto = photo;
-        
-        dispatch_async_on_main_queue(completeBlock, album);
-        
-        return;
-        
-    }
-    
-    
-    /* We could retrieve the "posterImage" property of the ALAssetsGroup object.
-     BUT the model to fit every services specifies we must set a GRKPhoto, and this object doesn't store any image data.
-     
-     So, let's retrieve an asset. 
-     If the group is "Library", retrieve the last asset of the group.
-     Else, retrieve the first one. 
-     (it seems to be the way it works on the Photo application ...)
-     
-     If you ever want to modify this grabber and access to the image directly :         
-     [UIImage imageWithCGImage:groupForThisAlbum.posterImage]  
-     */
-    
-    NSIndexSet * indexSetOfAssetToRetrieve = [NSIndexSet indexSet];
-    
-    if ( album.count > 0 ) {
-        
-        if ( ALAssetsGroupSavedPhotos == [[groupForThisAlbum valueForProperty:ALAssetsGroupPropertyType] intValue] ){
+        if ( groupForThisAlbum == nil ) {
             
-            indexSetOfAssetToRetrieve = [NSIndexSet indexSetWithIndex:album.count-1];
             
-        } else if ( ALAssetsGroupAlbum == [[groupForThisAlbum valueForProperty:ALAssetsGroupPropertyType] intValue] ){
+            dispatch_async_on_main_queue(errorBlock, [self errorForFillCoverOperation]);
             
-            indexSetOfAssetToRetrieve = [NSIndexSet indexSetWithIndex:0];
+            return;
+        }
+        
+        if (groupForThisAlbum.posterImage != nil) {
+            
+            GRKPhoto *photo = [[GRKPhoto alloc] init];
+            photo.thumbnail = [UIImage imageWithCGImage:groupForThisAlbum.posterImage];
+            
+            album.coverPhoto = photo;
+            
+            dispatch_async_on_main_queue(completeBlock, album);
+            
+            return;
             
         }
+        
+        
+        /* We could retrieve the "posterImage" property of the ALAssetsGroup object.
+         BUT the model to fit every services specifies we must set a GRKPhoto, and this object doesn't store any image data.
+         
+         So, let's retrieve an asset.
+         If the group is "Library", retrieve the last asset of the group.
+         Else, retrieve the first one.
+         (it seems to be the way it works on the Photo application ...)
+         
+         If you ever want to modify this grabber and access to the image directly :
+         [UIImage imageWithCGImage:groupForThisAlbum.posterImage]
+         */
+        
+        NSIndexSet * indexSetOfAssetToRetrieve = [NSIndexSet indexSet];
+        
+        if ( album.count > 0 ) {
+            
+            if ( ALAssetsGroupSavedPhotos == [[groupForThisAlbum valueForProperty:ALAssetsGroupPropertyType] intValue] ){
+                
+                indexSetOfAssetToRetrieve = [NSIndexSet indexSetWithIndex:album.count-1];
+                
+            } else if ( ALAssetsGroupAlbum == [[groupForThisAlbum valueForProperty:ALAssetsGroupPropertyType] intValue] ){
+                
+                indexSetOfAssetToRetrieve = [NSIndexSet indexSetWithIndex:0];
+                
+            }
+        }
+        
+        [self incrementQueriesCount];
+        
+        [groupForThisAlbum  enumerateAssetsAtIndexes:indexSetOfAssetToRetrieve
+                                             options:0
+                                          usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
+                                              
+                                              // check if the cancelAll flag has been set
+                                              if ( cancelAllFlag == YES ){
+                                                  *stop = YES;
+                                                  [self decrementQueriesCount];
+                                                  return;
+                                              }
+                                              
+                                              // when enumeration is finished, a nil group is passed to this block
+                                              if ( result == nil ){
+                                                  [self decrementQueriesCount];
+                                                  
+                                                  dispatch_async_on_main_queue(completeBlock, album);
+                                                  return;
+                                                  
+                                              } else if ( album.coverPhoto == nil ){
+                                                  
+                                                  album.coverPhoto = [self photoFromALAsset:result atIndex:index];
+                                                  
+                                              }
+                                              
+                                              
+                                          }];
     }
-    
-    [self incrementQueriesCount];
-    
-    [groupForThisAlbum  enumerateAssetsAtIndexes:indexSetOfAssetToRetrieve
-                                         options:0 
-                                      usingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
-                                          
-                                          // check if the cancelAll flag has been set 
-                                          if ( cancelAllFlag == YES ){
-                                              *stop = YES;
-                                              [self decrementQueriesCount];
-                                              return;
-                                          }
-                                          
-                                          // when enumeration is finished, a nil group is passed to this block
-                                          if ( result == nil ){
-                                              [self decrementQueriesCount];
-                                              
-                                              dispatch_async_on_main_queue(completeBlock, album);
-                                              return;
-                                              
-                                          } else if ( album.coverPhoto == nil ){
-                                          
-                                              album.coverPhoto = [self photoFromALAsset:result atIndex:index];
-                                              
-                                          }
-                                         
-                                          
-                                      }];
-    
+    else if ([group isKindOfClass:[PHFetchResult class]])
+    {
+        PHFetchResult *fetchResult = (PHFetchResult *)group;
+        PHAsset *lastAsset = [fetchResult lastObject];
+        PHImageRequestOptions *imageOptions = [[PHImageRequestOptions alloc] init];
+        imageOptions.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
+        imageOptions.networkAccessAllowed = YES;
+        
+        [self incrementQueriesCount];
+        [[PHImageManager defaultManager] requestImageForAsset:lastAsset targetSize:CGSizeMake(120, 120) contentMode:PHImageContentModeAspectFill options:imageOptions resultHandler:^(UIImage *result, NSDictionary *info) {
+            
+            [self decrementQueriesCount];
+            
+            if (result) {
+                GRKPhoto *photo = [[GRKPhoto alloc] init];
+                photo.thumbnail = result;
+                album.coverPhoto = photo;
+            }
+            
+            dispatch_async_on_main_queue(completeBlock, album);
+        }];
+    }
+    else
+    {
+        dispatch_async_on_main_queue(errorBlock, [self errorForFillCoverOperation]);
+    }
 }
 
 
@@ -698,11 +893,30 @@ Then : we have to fetch from "(page index) * (number of photo per page)" to "ran
         
     }
     
-    photo.asset = asset;
+    photo.alAsset = asset;
     
 //    if (asset.thumbnail)
 //        photo.thumbnail = [UIImage imageWithCGImage:asset.thumbnail];
     
+    
+    return photo;
+}
+
+-(GRKPhoto*) defaultPhotoFromPHAsset:(PHAsset *)asset atIndex:(NSUInteger)index
+{
+    
+    GRKPhoto * photo = nil;
+    
+    GRKImage *image = [GRKImage imageWithURL:nil andWidth:asset.pixelWidth andHeight:asset.pixelHeight isOriginal:YES];
+    image.asset = asset;
+    
+    photo = [GRKPhoto photoWithId:[NSString stringWithFormat:@"PHALLAsset%d", (int)index]
+                       andCaption:nil
+                          andName:nil
+                        andImages:@[image]
+                         andDates:@{}];
+    
+    photo.alAsset = nil;
     
     return photo;
 }

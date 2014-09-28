@@ -311,7 +311,7 @@
             continue;
         }
         
-        [[GRKPickerThumbnailManager sharedInstance] downloadPhotoAtURL:image.URL withCompleteBlock:^(UIImage *thumbnail, BOOL retrievedFromCache) {
+        [[GRKPickerThumbnailManager sharedInstance] downloadPhotoWithGRKImage:image withCompleteBlock:^(UIImage *thumbnail, BOOL retrievedFromCache) {
             
             
             image.image = thumbnail;

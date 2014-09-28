@@ -160,15 +160,11 @@
     
     GRKImage *grkImage = [self.photo originalImage];
     
-    if ( !grkImage || !grkImage.URL )
-        return;
-    
-    
     [self showHUD];
     
     __weak GRKPickerPhotoViewer *wself = self;
     
-    [[GRKPickerThumbnailManager sharedInstance] downloadPhotoAtURL:grkImage.URL withCompleteBlock:^(UIImage *thumbnail, BOOL retrievedFromCache) {
+    [[GRKPickerThumbnailManager sharedInstance] downloadPhotoWithGRKImage:grkImage withCompleteBlock:^(UIImage *thumbnail, BOOL retrievedFromCache) {
         
         
         __strong GRKPickerPhotoViewer *sself = wself;

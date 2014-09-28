@@ -415,6 +415,7 @@
 		C0EFCF66199AFD3D00223359 /* GRKDropboxGrabber.m in Sources */ = {isa = PBXBuildFile; fileRef = C0EFCF60199AFADC00223359 /* GRKDropboxGrabber.m */; };
 		C0EFCF67199AFD4F00223359 /* GRKDropboxGrabber.h in Headers */ = {isa = PBXBuildFile; fileRef = C0EFCF5F199AFADC00223359 /* GRKDropboxGrabber.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C0EFCF69199AFDBD00223359 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0EFCF68199AFDBD00223359 /* DropboxSDK.framework */; };
+		D8098F4E19D2488200AA16D2 /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8098F4D19D2488200AA16D2 /* Photos.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		D8C9E8D0199AEB2F00FF9CDD /* thumbnail_expand.png in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8CE199AEB2F00FF9CDD /* thumbnail_expand.png */; };
 		D8C9E8D1199AEB2F00FF9CDD /* thumbnail_expand@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2x.png */; };
 		D8C9E8EA199AF32F00FF9CDD /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */; };
@@ -851,6 +852,7 @@
 		C0EFCF62199AFD3200223359 /* GRKDropboxManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKDropboxManager.h; sourceTree = "<group>"; };
 		C0EFCF63199AFD3200223359 /* GRKDropboxManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKDropboxManager.m; sourceTree = "<group>"; };
 		C0EFCF68199AFDBD00223359 /* DropboxSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DropboxSDK.framework; path = ../../../Frameworks/DropboxSDK.framework; sourceTree = "<group>"; };
+		D8098F4D19D2488200AA16D2 /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 		D8C9E8CE199AEB2F00FF9CDD /* thumbnail_expand.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = thumbnail_expand.png; sourceTree = "<group>"; };
 		D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "thumbnail_expand@2x.png"; sourceTree = "<group>"; };
 		D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FacebookSDK.framework; path = ../../../Frameworks/FacebookSDK.framework; sourceTree = "<group>"; };
@@ -862,6 +864,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8098F4E19D2488200AA16D2 /* Photos.framework in Frameworks */,
 				5F990C461702F41000B89A7B /* GrabKitLib.a in Frameworks */,
 				5F8E24AA16A7F8660090F93B /* Accounts.framework in Frameworks */,
 				5F8E24AB16A7F8660090F93B /* AdSupport.framework in Frameworks */,
@@ -932,6 +935,7 @@
 		5F3C2B4D15B9F7FC008D894A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D8098F4D19D2488200AA16D2 /* Photos.framework */,
 				C0EFCF68199AFDBD00223359 /* DropboxSDK.framework */,
 				D8C9E8EB199AF36400FF9CDD /* Resources */,
 				D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */,

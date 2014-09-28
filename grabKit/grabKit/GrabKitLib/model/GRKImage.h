@@ -54,6 +54,8 @@
 
 @property (nonatomic, strong) id image;
 
+@property (nonatomic, strong) id/*PHAsset*/ asset;
+
 
 /** @name Creating a GRKImage */
 

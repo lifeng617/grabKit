@@ -117,7 +117,7 @@ extern GRKPhotoDateProperty * const kGRKPhotoDatePropertyDateTaken;
 
 @property (nonatomic, strong) UIImage *thumbnail;
 
-@property (nonatomic, strong) ALAsset *asset;
+@property (nonatomic, strong) ALAsset *alAsset;
 
 @property (nonatomic, weak, readonly) GRKAlbum * album;
 

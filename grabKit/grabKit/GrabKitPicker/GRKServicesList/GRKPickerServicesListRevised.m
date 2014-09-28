@@ -428,7 +428,9 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     
     
     if (!_grabber)
+    {
         _grabber = [[GRKDeviceGrabber alloc] init];
+    }
     
     [self setState:GRKPickerAlbumsListStateConnecting];
     
@@ -580,7 +582,7 @@ static NSString *loadMoreCellIdentifier = @"loadMoreCell";
     [cell setAlbum:album];
     
     
-    if ( album.coverPhoto == nil && [album.coverPhoto.images count] == 0 )
+    if ( album.coverPhoto == nil && [album.coverPhoto.images count] == 0  && album.coverPhoto.thumbnail == nil)
         return;
     
     if (album.coverPhoto.thumbnail != nil) {
