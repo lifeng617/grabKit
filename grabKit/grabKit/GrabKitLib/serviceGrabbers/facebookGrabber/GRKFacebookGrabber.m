@@ -181,47 +181,7 @@ static NSString *kGRKServiceNameFacebook = @"Facebook";
     // asking for the first page of albums ? 
     if ( pageIndex == 0 ){
         
-        // then we know we'll ask for one less album
-        numberOfAlbumsPerPage -= 1;
-        
-        //Create a batchQuery to ask for :
-        // _ the tagged photos (with a FQL query)
-        // _ the photo albums (with a graph path query)
        __block GRKFacebookBatchQuery * batchQuery = [[GRKFacebookBatchQuery alloc] init];
-        
-        
-        //  First query of the batch : the tagged photos
-        NSString * graphPathFQL = @"fql";
-        NSMutableDictionary *paramsFQL = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-                                          @"SELECT '' FROM photo_tag WHERE subject=me()", @"q",
-                                          nil];
-        
-        [batchQuery addQueryWithGraphPath:graphPathFQL 
-                               withParams:paramsFQL 
-                                  andName:@"taggedPhotos" 
-                         andHandlingBlock:^id(GRKFacebookBatchQuery *query, id result, NSError *error) {
-            
-            // Build the GRKAlbum of the tagged photos from the result, and return it. Or return the error if needed.
-            
-            if ( error ) {
-                return error;
-            }
-            
-            if ( [result objectForKey:@"data"] == nil ) {
-
-                NSError * error = [self errorForBadFormatResultForAlbumsOperation];
-                return error;
-            }
-            
-
-            GRKAlbum * taggedPhotosAlbum = [[GRKAlbum alloc] initWithId:@"me" // do NOT change this value 
-                                                                andName:[GRKCONFIG facebookTaggedPhotosAlbumName]
-                                                               andCount:[[result objectForKey:@"data"] count] 
-                                                               andDates:nil];
-            
-            return taggedPhotosAlbum;
-            
-        } ];
         
         
         if (numberOfAlbumsPerPage != 0) { /* if pageIndex == 0 && numberOfAlbumsPerPage == 1 then we're already done here */
@@ -275,10 +235,8 @@ static NSString *kGRKServiceNameFacebook = @"Facebook";
         [batchQuery performWithFinalBlock:^(GRKFacebookBatchQuery * batchQuery, id results) {
 
             // if the result is not in the expected format ...
-            if ( [results objectForKey:@"taggedPhotos"] == nil 
-                || (numberOfAlbumsPerPage != 0 && [results objectForKey:@"albums"] == nil)
-            || [[results objectForKey:@"taggedPhotos"] isKindOfClass:[NSError class]] 
-            || [[results objectForKey:@"albums"] isKindOfClass:[NSError class]]     
+            if ( (numberOfAlbumsPerPage != 0 && [results objectForKey:@"albums"] == nil)
+            || [[results objectForKey:@"albums"] isKindOfClass:[NSError class]]
                 ){
                
                 if ( errorBlock != nil ) {
@@ -308,7 +266,6 @@ static NSString *kGRKServiceNameFacebook = @"Facebook";
                 
             // else, reorganize results and call the completion block
             NSMutableArray * albums = [NSMutableArray array];
-            [albums addObject:[results objectForKey:@"taggedPhotos"]];
             if (numberOfAlbumsPerPage !=0 ) [albums addObjectsFromArray:[results objectForKey:@"albums"]];
             
             dispatch_async_on_main_queue(completeBlock, albums);
@@ -327,7 +284,7 @@ static NSString *kGRKServiceNameFacebook = @"Facebook";
         
         NSMutableDictionary * params = [NSMutableDictionary  dictionaryWithObjectsAndKeys:@"id,name,count,updated_time,created_time,location", @"fields", nil];
         
-        NSNumber * offset = [NSNumber numberWithInt:(pageIndex * numberOfAlbumsPerPage ) -1 ]; 
+        NSNumber * offset = [NSNumber numberWithInt:(pageIndex * numberOfAlbumsPerPage ) ];
                     // minus one : refer to the implementation details above
             
         [params setObject:[offset stringValue] forKey:@"offset"];	

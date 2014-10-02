@@ -10,6 +10,7 @@
 #import "GRKPickerPhotoViewer.h"
 #import "GRKPickerPhotosList.h"
 #import "GRKPickerPhotosListThumbnail.h"
+#import "GRKPickerPhotosListRowCell.h"
 #import "GRKPickerThumbnailManager.h"
 #import "GRKPickerViewController.h"
 #import "GRKPickerViewController+privateMethods.h"
@@ -17,21 +18,31 @@
 
 #import "MBProgressHUD.h"
 
-@interface GRKPickerCloudPhotosList ()<UICollectionViewDataSource, UICollectionViewDelegate, GRKPickerPhotoListThumbailDelegate>
+@interface GRKPickerCloudPhotosList ()<UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout, GRKPickerPhotoListThumbailDelegate>
 
 {
     
     BOOL _viewLoaded;
+    BOOL _needToLoadMore;
+    CGSize _rowSize;
+    CGSize _cellSize;
     
 }
-
-@property (nonatomic, strong) NSArray *photos;
 @end
 
 
 
 
 @implementation GRKPickerCloudPhotosList
+
+-(void) dealloc
+{
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"DDMorePhotosLoaded" object:nil];
+    
+    if (_grabber)
+        [_grabber cancelAll];
+}
 
 -(id) initWithGrabber:(id)grabber andServiceName:(NSString *)serviceName{
     
@@ -286,11 +297,35 @@
 
 -(void) didTouchDoneButton {
     
+    // stop all operations of the grabber
+    [_grabber cancelAll];
+    
+    // stop all loads of thumbnails
+    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
+    [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
+    
+    // Reset the operations count.
+    // If the view disappears while something is loading (i.e. after an INCREASE_OPERATIONS_COUNT),
+    //  the corresponding DECREASE_OPERATIONS_COUNT is not called, and the activity indicator remains spinning...
+    RESET_OPERATIONS_COUNT
+    
     [[GRKPickerViewController sharedInstance] done];
     
 }
 
 -(void) didTouchCancelButton {
+    
+    // stop all operations of the grabber
+    [_grabber cancelAll];
+    
+    // stop all loads of thumbnails
+    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
+    [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
+    
+    // Reset the operations count.
+    // If the view disappears while something is loading (i.e. after an INCREASE_OPERATIONS_COUNT),
+    //  the corresponding DECREASE_OPERATIONS_COUNT is not called, and the activity indicator remains spinning...
+    RESET_OPERATIONS_COUNT
     
     [[GRKPickerViewController sharedInstance] dismiss];
     
@@ -331,14 +366,20 @@
     
 }
 
+-(void)onMorePhotosLoaded:(id)sender {
+    
+    _needToLoadMore = YES;
+    
+}
+
 #pragma mark - Life Cycle
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     
-    CGSize screenSz = _contentView.bounds.size;
-    _tipLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, screenSz.width, 40)];
+    CGSize viewSz = _contentView.bounds.size;
+    _tipLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, viewSz.width, 40)];
     _tipLabel.font = [UIFont systemFontOfSize:14];
     _tipLabel.textAlignment = NSTextAlignmentCenter;
     _tipLabel.textColor = [UIColor darkGrayColor];
@@ -355,16 +396,18 @@
     }
     [_contentView addSubview:_tipLabel];
     
-    
+    CGSize screenSz = [UIScreen mainScreen].bounds.size;
+    _cellSize = (CGSize){screenSz.width / 4 - 1, screenSz.width / 4 - 1};
+    _rowSize = (CGSize){screenSz.width, 44};
     
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-    [flowLayout setItemSize:CGSizeMake(75, 75)];
+    [flowLayout setItemSize:_cellSize];
     [flowLayout setMinimumInteritemSpacing:1.0f];
-    [flowLayout setMinimumLineSpacing:4.0f];
-    [flowLayout setSectionInset:UIEdgeInsetsMake(4, 4, 4, 4)];
+    [flowLayout setMinimumLineSpacing:1];
+    [flowLayout setSectionInset:UIEdgeInsetsMake(1, 0, 1, 0)];
     
     
-    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 40, screenSz.width, screenSz.height - 40)
+    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 40, viewSz.width, viewSz.height - 40)
                                          collectionViewLayout:flowLayout];
     _collectionView.delegate = self;
     _collectionView.dataSource = self;
@@ -378,6 +421,7 @@
     _collectionView.backgroundColor = [UIColor whiteColor];
     _collectionView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [_collectionView registerClass:[GRKPickerPhotosListThumbnail class] forCellWithReuseIdentifier:@"pickerPhotosCell"];
+    [_collectionView registerClass:[GRKPickerPhotosListRowCell class] forCellWithReuseIdentifier:@"pickerAlbumsCell"];
     
     
     
@@ -395,6 +439,7 @@
     
     
     _viewLoaded = NO;
+    _needToLoadMore = NO;
     
 }
 
@@ -419,7 +464,10 @@
 {
     [super viewDidAppear:animated];
     
-    self.title = _serviceName;
+    if (self.album)
+        self.title = self.album.name;
+    else
+        self.title = _serviceName;
     
     if ( state != GRKPickerCloudPhotosListStateInitial )
         return;
@@ -482,25 +530,20 @@
     [super viewWillDisappear:animated];
     
     
-    // stop all operations of the grabber
-    [_grabber cancelAll];
-    
-    // stop all loads of thumbnails
-    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
-    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfPhotosToDownload];
-    [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
-    // stop all operations of the grabber
-    [_grabber cancelAll];
-    
-    // stop all loads of thumbnails
-    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
-    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfPhotosToDownload];
-    [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
+//    // stop all operations of the grabber
+//    [_grabber cancelAll];
+//    
+//    // stop all loads of thumbnails
+//    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfThumbnailsToDownload];
+//    [[GRKPickerThumbnailManager sharedInstance] removeAllURLsOfPhotosToDownload];
+//    [[GRKPickerThumbnailManager sharedInstance] cancelAllConnections];
+//    // stop all operations of the grabber
+//    [_grabber cancelAll];
     
     // Reset the operations count.
     // If the view disappears while something is (i.e. after a INCREASE_OPERATIONS_COUNT),
     //  the corresponding DECREASE_OPERATIONS_COUNT is not called, and the activity indicator remains spinning...
-    RESET_OPERATIONS_COUNT
+//    RESET_OPERATIONS_COUNT
     
 }
 
@@ -544,18 +587,35 @@
     if ( state == GRKPickerCloudPhotosListStateGrabbing)
         return;
     
+    if (!self.album)
+    {
+        GRKAlbum *album = [GRKAlbum albumWithId:@"root" andName:_serviceName andCount:0 andDates:@{}];
+        self.album = album;
+    }
+    
+    if (self.album.count > 0)
+    {
+        if ( _contentView.hidden  ){
+            
+            _contentView.alpha = 1;
+            _contentView.hidden = NO;
+        }
+        
+        [_collectionView reloadData];
+        return;
+    }
+    
     [self setState:GRKPickerCloudPhotosListStateGrabbing];
+    
     
     __weak GRKPickerCloudPhotosList *wself = self;
     
-    [_grabber fillAlbum:nil withPhotosAtPageIndex:0 withNumberOfPhotosPerPage:0 andCompleteBlock:^(id result) {
+    [_grabber fillAlbum:self.album withPhotosAtPageIndex:0 withNumberOfPhotosPerPage:0 andCompleteBlock:^(id result) {
         
         
         __strong GRKPickerCloudPhotosList *sself = wself;
         
         if (sself) {
-            
-            sself.photos = result;
             
             [sself setState:GRKPickerCloudPhotosListStatePhotosGrabbed];
         }
@@ -567,8 +627,6 @@
         
         if (sself) {
             
-            sself.photos = nil;
-            
             [sself setState:GRKPickerCloudPhotosListStateGrabbingFailed];
             
         }
@@ -579,25 +637,27 @@
 
 #pragma mark - Helpers
 
-
--(GRKPhoto*) photoForCellAtIndexPath:(NSIndexPath*)indexPath {
+-(id) itemForCellAtIndexPath:(NSIndexPath*)indexPath {
     
-    return [self photoForCellAtIndex:indexPath.row];
+    return [self itemForCellAtIndex:indexPath.row];
 }
 
--(GRKPhoto*) photoForCellAtIndex:(NSUInteger)index {
+-(id) itemForCellAtIndex:(NSUInteger)index {
     
     /*
      As there is only one section in the collectionView, we can rely on the indexPath.row value without further calculations
      */
-    
-    if (index < [self.photos count]) {
+    NSArray * photos = [_album photosAtPageIndex:index withNumberOfPhotosPerPage:1];
+    if ( [photos count] > 0 ){
         
-        return self.photos[index];
+        id expectedPhoto = [photos objectAtIndex:0];
+        if ( expectedPhoto == [NSNull null] ){
+            return nil;
+        }
         
-    }
-    
-    return nil;
+        return expectedPhoto;
+        
+    } else return nil;
 }
 
 - (void)zoomPhotoListThumbnail:(GRKPickerPhotosListThumbnail *)cell
@@ -605,9 +665,9 @@
     
     NSUInteger index = cell.index;
     
-    GRKPhoto *photo = [self photoForCellAtIndex:index];
+    id photo = [self itemForCellAtIndex:index];
     
-    if ( photo ) {
+    if ( [photo isKindOfClass:[GRKPhoto class]]) {
         
         GRKPickerPhotoViewer * photoViewer = [[GRKPickerPhotoViewer alloc] initWithPhoto:photo];
         
@@ -620,11 +680,13 @@
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
     
-    return [self.photos count];
+    NSInteger res = [self.album count];
+    
+    return res;
     
 }
 
--(void) prepareCell:(GRKPickerPhotosListThumbnail *)cell fromCollectionView:(UICollectionView*)collectionView atIndexPath:(NSIndexPath*)indexPath withPhoto:(GRKPhoto*)photo  {
+-(void) preparePhotoCell:(GRKPickerPhotosListThumbnail *)cell fromCollectionView:(UICollectionView*)collectionView atIndexPath:(NSIndexPath*)indexPath withPhoto:(GRKPhoto*)photo  {
     
     NSURL * thumbnailURL = nil;
     
@@ -684,34 +746,69 @@
 }
 
 
+
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    id item = [self itemForCellAtIndexPath:indexPath];
+    
+    if (item)
+    {
+        if ([item isKindOfClass:[GRKPhoto class]])
+        {
+            return _cellSize;
+        }
+        else
+        {
+            return _rowSize;
+        }
+    }
+    
+    return CGSizeZero;
+}
+
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     
-    GRKPickerPhotosListThumbnail * cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"pickerPhotosCell" forIndexPath:indexPath];
-    cell.backgroundColor = [UIColor whiteColor];
-    cell.index = indexPath.row;
-    cell.delegate = self;
+    UICollectionViewCell *res = nil;
     
-    GRKPhoto * photo = [self photoForCellAtIndexPath:indexPath];
-    if ( photo != nil ) {
-        
-        [self prepareCell:cell fromCollectionView:collectionView atIndexPath:indexPath withPhoto:photo];
-        
-        if ( ! cell.selected && [[[GRKPickerViewController sharedInstance] selectedPhotosIds] containsObject:photo.photoId]) {
-            //[collectionView selectItemAtIndexPath:indexPath animated:NO scrollPosition:UICollectionViewScrollPositionNone];
-            [collectionView selectItemAtIndexPath:indexPath animated:NO scrollPosition:UICollectionViewScrollPositionNone];
-            cell.selected = YES;
+    id item = [self itemForCellAtIndexPath:indexPath];
+    
+    if (item)
+    {
+        if ([item isKindOfClass:[GRKPhoto class]])
+        {
+            GRKPickerPhotosListThumbnail * cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"pickerPhotosCell" forIndexPath:indexPath];
+            cell.backgroundColor = [UIColor whiteColor];
+            cell.index = indexPath.row;
+            cell.delegate = self;
+            
+            [self preparePhotoCell:cell fromCollectionView:collectionView atIndexPath:indexPath withPhoto:item];
+            
+            if ( ! cell.selected && [[[GRKPickerViewController sharedInstance] selectedPhotosIds] containsObject:[item photoId]]) {
+                //[collectionView selectItemAtIndexPath:indexPath animated:NO scrollPosition:UICollectionViewScrollPositionNone];
+                [collectionView selectItemAtIndexPath:indexPath animated:NO scrollPosition:UICollectionViewScrollPositionNone];
+                cell.selected = YES;
+            }
+            
+            res= cell;
         }
-        
-        
-    } else {
-        
-        
-        
+        else
+        {
+            GRKAlbum *album = (GRKAlbum *)item;
+            GRKPickerPhotosListRowCell * cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"pickerAlbumsCell" forIndexPath:indexPath];
+            [cell setTitle:album.name];
+            
+            NSString *icon = album.albumType;
+            NSString * path = [GRK_BUNDLE pathForResource:[NSString stringWithFormat:@"dropbox_%@", icon] ofType:@"png"];
+            [cell setImage:[UIImage imageWithContentsOfFile:path]];
+            
+            res = cell;
+        }
     }
     
     
-    return cell;
+    
+    return res;
     
     
 }
@@ -722,110 +819,142 @@
 
 -(void)collectionView:(UICollectionView *)collectionView didHighlightItemAtIndexPath:(NSIndexPath *)indexPath {
     
+    id item = [self itemForCellAtIndexPath:indexPath];
     
-    GRKPhoto * highlightedPhoto = [self photoForCellAtIndexPath:indexPath];
-    
-    [[GRKPickerViewController sharedInstance] didHighlightPhoto:highlightedPhoto];
-    
+    if ([item isKindOfClass:[GRKPhoto class]])
+    {
+        [[GRKPickerViewController sharedInstance] didHighlightPhoto:item];
+    }
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didUnhighlightItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    GRKPhoto * unhighlightedPhoto = [self photoForCellAtIndexPath:indexPath];
     
-    [[GRKPickerViewController sharedInstance] didUnhighlightPhoto:unhighlightedPhoto];
+    id item = [self itemForCellAtIndexPath:indexPath];
     
+    if ([item isKindOfClass:[GRKPhoto class]])
+    {
+        [[GRKPickerViewController sharedInstance] didUnhighlightPhoto:item];
+    }
     
 }
 
 
 -(BOOL) collectionView:(UICollectionView *)collectionView shouldSelectItemAtIndexPath:(NSIndexPath *)indexPath {
     
-	GRKPhoto * selectedPhoto =  [self photoForCellAtIndexPath:indexPath];
     
-    // Only allow selection of items for already-loaded photos.
-    if ( selectedPhoto == nil || [selectedPhoto originalImage] == nil){
-        return NO;
-    }
+    id item = [self itemForCellAtIndexPath:indexPath];
     
-    NSUInteger maximumSelection = [GRKPickerViewController sharedInstance].maximumSelectionAllowed;
-    NSUInteger currentSelectin = [[[GRKPickerViewController sharedInstance] selectedPhotosIds] count];
-    if (currentSelectin >= maximumSelection) {
+    if ([item isKindOfClass:[GRKPhoto class]])
+    {
+        GRKPhoto * selectedPhoto =  (GRKPhoto *)item;
         
-        NSString *title = @"More photos won’t fit!";
-        NSString *message;
-        
-        if (maximumSelection > 1) {
-            message = [NSString stringWithFormat:@"The layout you chose has room for %lu photos. Please choose your favorite %lu photos.", (unsigned long)maximumSelection, (unsigned long)maximumSelection];
-        } else {
-            message = @"The layout you chose has room for 1 photo. Please choose your favorite photo.";
+        // Only allow selection of items for already-loaded photos.
+        if ( selectedPhoto == nil || [selectedPhoto originalImage] == nil){
+            return NO;
         }
-        [[[UIAlertView alloc] initWithTitle:title
-                                    message:message
-                                   delegate:nil
-                          cancelButtonTitle:nil
-                          otherButtonTitles:@"OK", nil] show];
         
-        return NO;
+        NSUInteger maximumSelection = [GRKPickerViewController sharedInstance].maximumSelectionAllowed;
+        NSUInteger currentSelectin = [[[GRKPickerViewController sharedInstance] selectedPhotosIds] count];
+        if (currentSelectin >= maximumSelection) {
+            
+            NSString *title = @"More photos won’t fit!";
+            NSString *message;
+            
+            if (maximumSelection > 1) {
+                message = [NSString stringWithFormat:@"The layout you chose has room for %lu photos. Please choose your favorite %lu photos.", (unsigned long)maximumSelection, (unsigned long)maximumSelection];
+            } else {
+                message = @"The layout you chose has room for 1 photo. Please choose your favorite photo.";
+            }
+            [[[UIAlertView alloc] initWithTitle:title
+                                        message:message
+                                       delegate:nil
+                              cancelButtonTitle:nil
+                              otherButtonTitles:@"OK", nil] show];
+            
+            return NO;
+        }
+        
+        
+        // if the photo is already loaded, then ask the Picker if it can select the photo or not
+        return [[GRKPickerViewController sharedInstance] shouldSelectPhoto:selectedPhoto];
     }
     
-    
-    // if the photo is already loaded, then ask the Picker if it can select the photo or not
-    return [[GRKPickerViewController sharedInstance] shouldSelectPhoto:selectedPhoto];
+    return YES;
 }
 
 
 
 -(BOOL) collectionView:(UICollectionView *)collectionView shouldDeselectItemAtIndexPath:(NSIndexPath *)indexPath {
     
-	GRKPhoto * deselectedPhoto =  [self photoForCellAtIndexPath:indexPath];
+    id item = [self itemForCellAtIndexPath:indexPath];
     
-    // Ask the Picker if it can deselect the photo or not
-    return [[GRKPickerViewController sharedInstance] shouldDeselectPhoto:deselectedPhoto];
+    if ([item isKindOfClass:[GRKPhoto class]])
+    {
+        GRKPhoto * deselectedPhoto =  (GRKPhoto *)item;
+        
+        return [[GRKPickerViewController sharedInstance] shouldDeselectPhoto:deselectedPhoto];
+    }
     
+    return YES;
 }
 
 
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    GRKPhoto * selectedPhoto = [self photoForCellAtIndexPath:indexPath];
+    id item = [self itemForCellAtIndexPath:indexPath];
     
-    /*
-     In single-selection mode, when the user selects an already-selected item, the item must be deselected.
-     */
-    // In single-selection mode
-    if ( collectionView.allowsSelection && ! collectionView.allowsMultipleSelection ){
+    if ([item isKindOfClass:[GRKPhoto class]])
+    {
+        GRKPhoto * selectedPhoto =  (GRKPhoto *)item;
         
-        // If the selected item has already been selected
-        if ( [[[GRKPickerViewController sharedInstance] selectedPhotosIds] containsObject:selectedPhoto.photoId] ){
+        /*
+         In single-selection mode, when the user selects an already-selected item, the item must be deselected.
+         */
+        // In single-selection mode
+        if ( collectionView.allowsSelection && ! collectionView.allowsMultipleSelection ){
             
-            // it must be deselected
-            [collectionView deselectItemAtIndexPath:indexPath animated:NO];
-            [[GRKPickerViewController sharedInstance] didDeselectPhoto:selectedPhoto];
-            [self updateRightBarButtonItem];
-            return;
+            // If the selected item has already been selected
+            if ( [[[GRKPickerViewController sharedInstance] selectedPhotosIds] containsObject:selectedPhoto.photoId] ){
+                
+                // it must be deselected
+                [collectionView deselectItemAtIndexPath:indexPath animated:NO];
+                [[GRKPickerViewController sharedInstance] didDeselectPhoto:selectedPhoto];
+                [self updateRightBarButtonItem];
+                return;
+                
+            }
             
         }
         
+        [[GRKPickerViewController sharedInstance] didSelectPhoto:selectedPhoto];
+        
+        [self updateRightBarButtonItem];
     }
-    
-    [[GRKPickerViewController sharedInstance] didSelectPhoto:selectedPhoto];
-    
-    [self updateRightBarButtonItem];
-    
+    else
+    {
+        [collectionView deselectItemAtIndexPath:indexPath animated:YES];
+        GRKPickerCloudPhotosList *vc = [[GRKPickerCloudPhotosList alloc] initWithGrabber:_grabber andServiceName:_grabber.serviceName];
+        vc.album = item;
+        [self.navigationController pushViewController:vc animated:YES];
+    }
 }
 
 -(void)collectionView:(UICollectionView *)collectionView didDeselectItemAtIndexPath:(NSIndexPath *)indexPath {
     
     
-    GRKPhoto * selectedPhoto = [self photoForCellAtIndexPath:indexPath];
+    id item = [self itemForCellAtIndexPath:indexPath];
     
-    //    if ( [[GRKPickerViewController sharedInstance] shouldDeselectPhoto:selectedPhoto] ){
-    
-    [[GRKPickerViewController sharedInstance] didDeselectPhoto:selectedPhoto];
-    [self updateRightBarButtonItem];
-    
-    //    }
+    if ([item isKindOfClass:[GRKPhoto class]])
+    {
+        GRKPhoto * selectedPhoto =  (GRKPhoto *)item;
+        
+        [[GRKPickerViewController sharedInstance] didDeselectPhoto:selectedPhoto];
+        [self updateRightBarButtonItem];
+    }
+    else
+    {
+    }
     
     
 }

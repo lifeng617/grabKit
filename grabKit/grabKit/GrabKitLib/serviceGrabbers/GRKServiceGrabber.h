@@ -103,6 +103,8 @@ An instance of a GRKFacebookGrabber would return YES, an instance of a GRKDevice
 
 /** @name Generating errors */
 
++(NSError *)errorForBadConnectionForService:(NSString *)service;
+
 /** Returns a NSError for an "albums" operation, with the current grabber's type in the domain, and the given error in the userInfo dictionary
  
  @param originalError the original error
@@ -123,7 +125,7 @@ An instance of a GRKFacebookGrabber would return YES, an instance of a GRKDevice
   @param originalError the original error
  */
 -(NSError *)errorForBadFormatResultForAlbumsOperationWithOriginalError:(NSError *)originalError;
-
++(NSError *)errorForBadFormatResultForAlbumsOperationWithOriginalError:(NSError *)originalError forService:(NSString *)service;
 
 /** Returns a NSError for a "fill album" operation, with the current grabber's type in the domain, and the given error in the userInfo dictionary
  

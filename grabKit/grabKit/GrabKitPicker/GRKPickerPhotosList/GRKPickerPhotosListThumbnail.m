@@ -67,9 +67,12 @@ static UIImage * thumbnailPlaceholderImage;
 
 -(void) buildViews {
     
-    UIImageView * backgroundImage = [[UIImageView alloc] initWithFrame:self.bounds];
+//    UIImageView * backgroundImage = [[UIImageView alloc] initWithFrame:self.bounds];
 //    [backgroundImage setImage:[GRKPickerPhotosListThumbnail sharedThumbnailPlaceholderImage]];
-    self.backgroundView = backgroundImage;
+//    self.backgroundView = backgroundImage;
+    UIView *view = [[UIView alloc] initWithFrame:self.bounds];
+    view.backgroundColor = [UIColor lightGrayColor];
+    self.backgroundView = view;
     
     // The imageView's frame is 1px smaller in every directions, in order to show the 1px-wide black border of the background image.
 //    CGRect thumbnailRect = CGRectMake(1, 1, self.bounds.size.width -2 , self.bounds.size.height -2 );

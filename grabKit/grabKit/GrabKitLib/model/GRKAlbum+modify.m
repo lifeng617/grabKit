@@ -30,13 +30,21 @@
 #pragma mark -
 #pragma photos setters
 
--(void) addPhoto:(GRKPhoto*)newPhoto atIndex:(NSUInteger)index;
+-(void) addPhoto:(id)newPhoto atIndex:(NSUInteger)index;
 {
     
-	[_photosIds setObject:newPhoto.photoId atIndex:index fillWithObject:[NSNull null]];
-	[_photos setObject:newPhoto forKey:newPhoto.photoId];
-    
-    newPhoto.album = self;
+    if ([newPhoto isKindOfClass:[GRKPhoto class]])
+    {
+        [_photosIds setObject:[newPhoto photoId] atIndex:index fillWithObject:[NSNull null]];
+        [_photos setObject:newPhoto forKey:[newPhoto photoId]];
+        
+        [newPhoto setAlbum:self];
+    }
+    else if ([newPhoto isKindOfClass:[GRKAlbum class]])
+    {
+        [_photosIds setObject:[newPhoto albumId] atIndex:index fillWithObject:[NSNull null]];
+        [_photos setObject:newPhoto forKey:[newPhoto albumId]];
+    }
     
     // sometimes, some API returns a 'count' value lower than the actual number of photos. (happened with FlickR several times)
     if ( [_photos count] > _count ){

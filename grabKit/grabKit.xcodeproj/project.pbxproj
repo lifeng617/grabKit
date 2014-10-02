@@ -420,6 +420,13 @@
 		D8C9E8D1199AEB2F00FF9CDD /* thumbnail_expand@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2x.png */; };
 		D8C9E8EA199AF32F00FF9CDD /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */; };
 		D8C9E8F0199AF36400FF9CDD /* FBUserSettingsViewResources.bundle in Resources */ = {isa = PBXBuildFile; fileRef = D8C9E8ED199AF36400FF9CDD /* FBUserSettingsViewResources.bundle */; };
+		D8FDCEE819DA9170005B03BF /* dropbox_folder.png in Resources */ = {isa = PBXBuildFile; fileRef = D8FDCEE719DA9170005B03BF /* dropbox_folder.png */; };
+		D8FDCEE919DA92BB005B03BF /* GRKPickerPhotosListRowCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D8FDCEE519DA8C0F005B03BF /* GRKPickerPhotosListRowCell.m */; };
+		D8FDCEEF19DA9591005B03BF /* dropbox_folder_app.png in Resources */ = {isa = PBXBuildFile; fileRef = D8FDCEEA19DA9591005B03BF /* dropbox_folder_app.png */; };
+		D8FDCEF019DA9591005B03BF /* dropbox_folder_camera.png in Resources */ = {isa = PBXBuildFile; fileRef = D8FDCEEB19DA9591005B03BF /* dropbox_folder_camera.png */; };
+		D8FDCEF119DA9591005B03BF /* dropbox_folder_public.png in Resources */ = {isa = PBXBuildFile; fileRef = D8FDCEEC19DA9591005B03BF /* dropbox_folder_public.png */; };
+		D8FDCEF219DA9591005B03BF /* dropbox_folder_user_locked.png in Resources */ = {isa = PBXBuildFile; fileRef = D8FDCEED19DA9591005B03BF /* dropbox_folder_user_locked.png */; };
+		D8FDCEF319DA9591005B03BF /* dropbox_folder_user.png in Resources */ = {isa = PBXBuildFile; fileRef = D8FDCEEE19DA9591005B03BF /* dropbox_folder_user.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -857,6 +864,14 @@
 		D8C9E8CF199AEB2F00FF9CDD /* thumbnail_expand@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "thumbnail_expand@2x.png"; sourceTree = "<group>"; };
 		D8C9E8E9199AF32F00FF9CDD /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FacebookSDK.framework; path = ../../../Frameworks/FacebookSDK.framework; sourceTree = "<group>"; };
 		D8C9E8ED199AF36400FF9CDD /* FBUserSettingsViewResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = FBUserSettingsViewResources.bundle; sourceTree = "<group>"; };
+		D8FDCEE419DA8C0F005B03BF /* GRKPickerPhotosListRowCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GRKPickerPhotosListRowCell.h; sourceTree = "<group>"; };
+		D8FDCEE519DA8C0F005B03BF /* GRKPickerPhotosListRowCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GRKPickerPhotosListRowCell.m; sourceTree = "<group>"; };
+		D8FDCEE719DA9170005B03BF /* dropbox_folder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dropbox_folder.png; sourceTree = "<group>"; };
+		D8FDCEEA19DA9591005B03BF /* dropbox_folder_app.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dropbox_folder_app.png; sourceTree = "<group>"; };
+		D8FDCEEB19DA9591005B03BF /* dropbox_folder_camera.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dropbox_folder_camera.png; sourceTree = "<group>"; };
+		D8FDCEEC19DA9591005B03BF /* dropbox_folder_public.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dropbox_folder_public.png; sourceTree = "<group>"; };
+		D8FDCEED19DA9591005B03BF /* dropbox_folder_user_locked.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dropbox_folder_user_locked.png; sourceTree = "<group>"; };
+		D8FDCEEE19DA9591005B03BF /* dropbox_folder_user.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dropbox_folder_user.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1164,6 +1179,8 @@
 				5F46D80C16D4D87F0013CB3B /* GRKPickerPhotosList.xib */,
 				5F46D81016D4D87F0013CB3B /* GRKPickerPhotosListThumbnail.h */,
 				5F46D81116D4D87F0013CB3B /* GRKPickerPhotosListThumbnail.m */,
+				D8FDCEE419DA8C0F005B03BF /* GRKPickerPhotosListRowCell.h */,
+				D8FDCEE519DA8C0F005B03BF /* GRKPickerPhotosListRowCell.m */,
 			);
 			path = GRKPickerPhotosList;
 			sourceTree = "<group>";
@@ -1223,6 +1240,12 @@
 		5F52969516BAB63D007CA510 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				D8FDCEEA19DA9591005B03BF /* dropbox_folder_app.png */,
+				D8FDCEEB19DA9591005B03BF /* dropbox_folder_camera.png */,
+				D8FDCEEC19DA9591005B03BF /* dropbox_folder_public.png */,
+				D8FDCEED19DA9591005B03BF /* dropbox_folder_user_locked.png */,
+				D8FDCEEE19DA9591005B03BF /* dropbox_folder_user.png */,
+				D8FDCEE719DA9170005B03BF /* dropbox_folder.png */,
 				C08466FD199BBA51009C77ED /* dropbox.png */,
 				5F5DB41816C189F200C6C9E3 /* splashscreen4in.png */,
 				5F52969616BAB63D007CA510 /* facebook.png */,
@@ -2086,17 +2109,23 @@
 				C0979609199C4A2700CC849D /* GRKPickerPhotoViewer.xib in Resources */,
 				5F8CC03416D918E800307678 /* thumbnail_selected.png in Resources */,
 				C097962B199CAD0600CC849D /* GRKPickerServiceListCell.xib in Resources */,
+				D8FDCEF119DA9591005B03BF /* dropbox_folder_public.png in Resources */,
 				5F8CC03616D918E800307678 /* thumbnail_selected@2x.png in Resources */,
 				C08466FF199BBA7D009C77ED /* dropbox.png in Resources */,
 				5F8B84BE16F793C800ADCC8D /* GrabKitPicker.strings in Resources */,
 				5F990C371702DAC200B89A7B /* facebook.png in Resources */,
+				D8FDCEF219DA9591005B03BF /* dropbox_folder_user_locked.png in Resources */,
+				D8FDCEF319DA9591005B03BF /* dropbox_folder_user.png in Resources */,
 				D8C9E8D0199AEB2F00FF9CDD /* thumbnail_expand.png in Resources */,
 				5F990C381702DAC200B89A7B /* flickr.png in Resources */,
+				D8FDCEE819DA9170005B03BF /* dropbox_folder.png in Resources */,
+				D8FDCEEF19DA9591005B03BF /* dropbox_folder_app.png in Resources */,
 				5F990C391702DAC200B89A7B /* instagram.png in Resources */,
 				D8C9E8F0199AF36400FF9CDD /* FBUserSettingsViewResources.bundle in Resources */,
 				5F990C3A1702DAC200B89A7B /* picasa.png in Resources */,
 				5F990C3B1702DAC200B89A7B /* thumbnail_placeholder.png in Resources */,
 				5F990C3C1702DAC200B89A7B /* thumbnail_placeholder@2X.png in Resources */,
+				D8FDCEF019DA9591005B03BF /* dropbox_folder_camera.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2330,6 +2359,7 @@
 				5F5296B316BAB63D007CA510 /* GRKPickerAlbumsListCell.m in Sources */,
 				5F654F6516C3A1F600991DE6 /* NVUIGradientButton.m in Sources */,
 				5F654F8016C3D70200991DE6 /* GRKPickerLoadMoreCell.m in Sources */,
+				D8FDCEE919DA92BB005B03BF /* GRKPickerPhotosListRowCell.m in Sources */,
 				5F654F8516C8E1BA00991DE6 /* GRKErrorsConstants.m in Sources */,
 				5F654F9A16CA14D400991DE6 /* GRKFacebookGrabber+usernameAndProfilePicture.m in Sources */,
 				5F654FA016CA14D400991DE6 /* GRKInstagramGrabber+usernameAndProfilePicture.m in Sources */,

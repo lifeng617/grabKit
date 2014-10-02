@@ -6,6 +6,7 @@
 #import "GRKDropboxGrabber.h"
 #import "GRKConnectorsDispatcher.h"
 #import "GRKDropboxManager.h"
+#import "GRKAlbum+modify.h"
 #import "GRKConstants.h"
 #import <DropboxSDK/DropboxSDK.h>
 
@@ -93,7 +94,25 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
     
     // This function just fetch all photos saved in your dropbox
     
-    [[GRKDropboxManager manager] fetchAllPhotosWith:completeBlock andErrorBlock:errorBlock];
+    if (!album || [album.albumId isEqualToString:@"root"])
+    {
+        [[GRKDropboxManager manager] fetchRootDirectoryWithCompletionBlock:^(id result) {
+            if (album)
+                [album addPhotos:(NSArray *)result forPageIndex:0 withNumberOfPhotosPerPage:kGRKMaximumNumberOfPhotosPerPage];
+            dispatch_async_on_main_queue(completeBlock, (NSArray *)result);
+        } andErrorBlock:^(NSError *error) {
+            dispatch_async_on_main_queue(errorBlock, error);
+        }];
+    }
+    else
+    {
+        [[GRKDropboxManager manager] fetchPath:album.data withCompleteBlock:^(id result) {
+            [album addPhotos:(NSArray *)result forPageIndex:0 withNumberOfPhotosPerPage:kGRKMaximumNumberOfPhotosPerPage];
+            dispatch_async_on_main_queue(completeBlock, (NSArray *)result);
+        } andErrorBlock:^(NSError *error) {
+            dispatch_async_on_main_queue(errorBlock, error);
+        }];
+    }
 }
 
 

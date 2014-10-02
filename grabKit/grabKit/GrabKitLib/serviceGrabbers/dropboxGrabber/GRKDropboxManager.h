@@ -29,8 +29,8 @@ typedef void (^GRKDropboxDownloadCompleteBlock)(UIImage * thumbnail);
 + (GRKDropboxManager *)manager;
 - (void) cancelAll;
 
-- (void) fetchAllPhotosWith:(GRKServiceGrabberCompleteBlock)completeBlock
-              andErrorBlock:(GRKErrorBlock)errorBlock;
+- (void) fetchRootDirectoryWithCompletionBlock:(GRKServiceGrabberCompleteBlock)completeBlock andErrorBlock:(GRKErrorBlock)errorBlock;
+- (void) fetchPath:(NSString *)Path withCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock andErrorBlock:(GRKErrorBlock)errorBlock;
 
 - (void) downloadThumbnailAtURL:(NSURL*)thumbnailURL forThumbnailSize:(CGSize)thumbnailSize withCompleteBlock:(GRKDropboxDownloadCompleteBlock)completeBlock;
 

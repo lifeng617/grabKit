@@ -27,7 +27,8 @@
 const NSString * kGRKErrorOriginalErrorKey = @"originalError";
 const NSString * kGRKErrorOriginalAlbumKey = @"originalAlbum";
 
-
+const NSInteger kGRKBadConnectionErrorCode = 401;
+const NSString *kGRKBadConnectionErrorLocalizedDescription = @"You are not connected to the service.";
 const NSInteger kGRKBadFormatResultErrorCode = 400;
 const NSString * kGRKBadFormatResultErrorLocalizedDescription = @"result has a bad format";
 

@@ -30,6 +30,9 @@
 extern const NSString * kGRKErrorOriginalErrorKey;
 extern const NSString * kGRKErrorOriginalAlbumKey;
 
+/** Bad Connection **/
+extern const NSInteger kGRKBadConnectionErrorCode;
+extern const NSString *kGRKBadConnectionErrorLocalizedDescription;
 
 /** Bad Format result : the query has loaded, but the returned data it not in the expected format. */
 extern const NSInteger kGRKBadFormatResultErrorCode;

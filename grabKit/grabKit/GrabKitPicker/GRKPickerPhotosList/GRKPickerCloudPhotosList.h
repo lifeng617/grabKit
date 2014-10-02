@@ -51,7 +51,7 @@ typedef NS_ENUM(NSUInteger, GRKPickerCloudPhotosListState) {
     
     GRKPickerCloudPhotosListState state; // state of the controller
 }
-
+@property (nonatomic, strong) GRKAlbum *album;
 
 -(id) initWithGrabber:(id)grabber andServiceName:(NSString *)serviceName;
 @end

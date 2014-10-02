@@ -10,10 +10,12 @@
 #import "GRKServiceGrabber+usernameAndProfilePicture.h"
 #import "GRKPickerThumbnailManager.h"
 #import <DropboxSDK/DropboxSDK.h>
+#import <DropboxSDK/NSString+URLEscapingAdditions.h>
+#import <DropboxSDK/NSString+Dropbox.h>
 
 
-#define kThumbnailRequestMaxAge  5 // Max age of a request is 10 secs
-#define kPhotoRequestMaxAge  5 // Max age of a request is 10 secs
+#define kThumbnailRequestMaxAge  5 // Max age of a request is 5 secs
+#define kPhotoRequestMaxAge  10 // Max age of a request is 10 secs
 #define kMaxRequestCount 5
 
 typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
@@ -25,6 +27,10 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     
     GRKServiceGrabberCompleteBlock _profileCompleteBlock;
     GRKErrorBlock _profileErrorBlock;
+    
+    BOOL _fetchCompletionCalled;
+    
+    NSString *_curentPathFetching;
 }
 
 @property (nonatomic, strong) DBRestClient *restClient;
@@ -33,6 +39,9 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 
 @property (nonatomic, strong) NSMutableDictionary *photoReqDictionary;
 @property (nonatomic, strong) NSMutableArray *photoReqQueue;
+
+@property (nonatomic, strong) NSMutableDictionary *pathReqDictionary;
+@property (nonatomic, strong) NSMutableArray *pathReqQueue;
 
 
 @end
@@ -68,6 +77,9 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
         
         _isConnecting = NO;
         
+        self.pathReqDictionary = [NSMutableDictionary dictionary];
+        self.pathReqQueue = [NSMutableArray array];
+        
         self.thumbnailReqDictionary = [NSMutableDictionary dictionary];
         self.thumbnailReqQueue = [NSMutableArray array];
         
@@ -97,10 +109,39 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
 
 #pragma mark - Internal
 
+- (DBRestClient *)restClientWithResetFlag:(BOOL)reset
+{
+    if ((!_restClient || reset) && [self dropboxSession]) {
+        
+        _restClient = [[DBRestClient alloc] initWithSession:[self dropboxSession]];
+        _restClient.delegate = self;
+    }
+    
+    return _restClient;
+}
+
+- (void) resetRestClient
+{
+    [_restClient setDelegate:nil];
+    [_restClient cancelAllRequests];
+    _curentPathFetching = nil;
+    _fetchPhotosCompleteBlock = nil;
+    _fetchPhotosErrorBlock = nil;
+    _restClient = nil;
+}
 
 - (DBRestClient *)restClient
 {
     if (!_restClient && [self dropboxSession]) {
+        
+        self.pathReqDictionary = [NSMutableDictionary dictionary];
+        self.pathReqQueue = [NSMutableArray array];
+        
+        self.thumbnailReqDictionary = [NSMutableDictionary dictionary];
+        self.thumbnailReqQueue = [NSMutableArray array];
+        
+        self.photoReqDictionary = [NSMutableDictionary dictionary];
+        self.photoReqQueue = [NSMutableArray array];
         
         _restClient = [[DBRestClient alloc] initWithSession:[self dropboxSession]];
         _restClient.delegate = self;
@@ -139,7 +180,28 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     return [self topViewController:presentedViewController];
 }
 
-
+-(id) grkObjectWithMetaData:(DBMetadata *)metaData
+{
+    
+    id res = nil;
+    
+    if ([metaData isDirectory])
+    {
+        GRKAlbum *album = [GRKAlbum albumWithId:[metaData path]
+                                        andName:[metaData filename]
+                                       andCount:0
+                                       andDates:@{@"created_time":[metaData lastModifiedDate]}];
+        album.albumType = metaData.icon;
+        album.data = [[metaData path] normalizedDropboxPath];
+        res = album;
+    }
+    else
+    {
+        res = [self photoWithRawPhoto:metaData];
+    }
+    
+    return res;
+}
 
 /** Build and return a GRKPhoto from the given dictionary.
  
@@ -219,6 +281,11 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     if (_restClient)
         [_restClient cancelAllRequests];
     
+    _curentPathFetching = nil;
+    [self.pathReqDictionary removeAllObjects];
+    [self.pathReqQueue removeAllObjects];
+    [self.photoReqDictionary removeAllObjects];
+    [self.photoReqQueue removeAllObjects];
     [self.thumbnailReqDictionary removeAllObjects];
     [self.thumbnailReqQueue removeAllObjects];
 }
@@ -313,23 +380,204 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     
 }
 
-- (void) fetchAllPhotosWith:(GRKServiceGrabberCompleteBlock)completeBlock
-              andErrorBlock:(GRKErrorBlock)errorBlock
+- (void) fetchRootDirectoryWithCompletionBlock:(GRKServiceGrabberCompleteBlock)completeBlock andErrorBlock:(GRKErrorBlock)errorBlock
 {
-    
-    
     if ([[self dropboxSession] isLinked]) {
         
-        _fetchPhotosCompleteBlock = completeBlock;
-        _fetchPhotosErrorBlock = errorBlock;
+        if ([self.restClient requestCount] > 0)
+        {
+            [self resetRestClient];
+        }
         
-        [self.restClient searchPath:@"/" forKeyword:@"."];
-//        [self.restClient searchPath:@"/Inaka Networks - Campus Sentinel/White Label Versions/*APP SCREENS*/" forKeyword:@"."];
+        [self fetchPath:@"/" withCompleteBlock:completeBlock andErrorBlock:errorBlock];
         
-    } else {
+    }
+    else
+    {
+        dispatch_async_on_main_queue(errorBlock, [GRKServiceGrabber errorForBadConnectionForService:@"dropbox"]);
+    }
+}
+
+- (NSInteger)processNextPhotoRequestsInQueueWithLimit:(NSInteger)limit
+{
+    
+    NSInteger procceedCount = 0;
+    
+    @synchronized(self.photoReqQueue) {
         
-        dispatch_async_on_main_queue(completeBlock, nil);
+        NSInteger index = 0;
         
+        while ([self.restClient requestCount] < kMaxRequestCount && index < limit) {
+            
+            NSDictionary *request = [self.photoReqQueue lastObject];
+            
+            if (request == nil)
+                break;
+            
+            NSLog(@"Downloading Photo : %@", request[@"path"]);
+            
+            [self downloadPhotoAtPath:request[@"path"] withCompletionBlock:request[@"completion"]];
+            
+            [self.photoReqQueue removeObject:request];
+            
+            procceedCount ++;
+        }
+        
+    }
+    
+    return procceedCount;
+}
+
+- (NSInteger)processNextThumanilRequestsInQueueWithLimit:(NSInteger)limit
+{
+    
+    NSInteger procceedCount = 0;
+    
+    @synchronized(self.thumbnailReqQueue) {
+        
+        NSInteger index = 0;
+        
+        while ([self.restClient requestCount] < kMaxRequestCount && index < limit) {
+            
+            NSDictionary *request = [self.thumbnailReqQueue lastObject];
+            
+            if (request == nil)
+                break;
+            
+            NSLog(@"Downloading Thumbnail : %@", request[@"path"]);
+            
+            [self downloadThumbnailAtPath:request[@"path"] withCompletionBlock:request[@"completion"]];
+            
+            [self.thumbnailReqQueue removeObject:request];
+            
+            procceedCount ++;
+        }
+        
+    }
+    
+    return procceedCount;
+}
+
+- (NSInteger) processNextPathRequestWithLimit:(NSInteger)limit
+{
+    
+    NSInteger procceedCount = 0;
+    
+    @synchronized(self.pathReqQueue) {
+        
+        NSInteger index = 0;
+        
+        while ([self.restClient requestCount] < kMaxRequestCount && index < limit) {
+            
+            NSDictionary *request = [self.pathReqQueue lastObject];
+            
+            if (request == nil)
+                break;
+            
+            NSLog(@"Fetching Path : %@", request[@"path"]);
+            
+            if (![self internalFetchPath:request[@"path"] withCompletionBlock:request[@"completion"] andErrorBlock:request[@"error"]])
+                break;
+            
+            [self.pathReqQueue removeObject:request];
+            
+            procceedCount ++;
+        }
+        
+    }
+    
+    return procceedCount;
+}
+
+
+- (void) processNextRequest
+{
+    if ([self.restClient requestCount] <= kMaxRequestCount - 2)
+    {
+        NSInteger fetchCount = kMaxRequestCount - [self.restClient requestCount];
+        NSInteger reqCountForPathFetch = [self.pathReqQueue count];
+        NSInteger reqCountForPhotoDownload = [self.photoReqQueue count];
+        NSInteger reqCountForThumbnailDownload = [self.thumbnailReqQueue count];
+        
+        
+        if (reqCountForPhotoDownload == 0 && reqCountForThumbnailDownload == 0)
+            reqCountForPathFetch = fetchCount;
+        else
+            reqCountForPathFetch = MAX(1, fetchCount - reqCountForPhotoDownload - reqCountForThumbnailDownload);
+        
+        reqCountForPhotoDownload = fetchCount - [self processNextPathRequestWithLimit:reqCountForPathFetch];
+        NSInteger proceedCount = [self processNextPhotoRequestsInQueueWithLimit:reqCountForPhotoDownload];
+        
+        if (proceedCount < reqCountForPhotoDownload)
+            [self processNextThumanilRequestsInQueueWithLimit:reqCountForPhotoDownload - proceedCount];
+        
+    }
+}
+
+#pragma mark Path
+
+- (void) fetchPath:(NSString *)Path withCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock andErrorBlock:(GRKErrorBlock)errorBlock
+{
+    NSString *path = [Path normalizedDropboxPath];
+    
+    if ([self.restClient requestCount] >= kMaxRequestCount || ![self internalFetchPath:path withCompletionBlock:completeBlock andErrorBlock:errorBlock]) {
+        
+        NSDictionary *request = @{@"path":path,
+                                  @"completion":completeBlock,
+                                  @"error":errorBlock,
+                                  @"date":[NSDate date]};
+        
+        [self queueFetchPathRequest:request];
+        
+    }
+}
+
+
+- (BOOL)internalFetchPath:(NSString *)path withCompletionBlock:(GRKServiceGrabberCompleteBlock)completeBlock andErrorBlock:(GRKErrorBlock)errorBlock
+{
+    
+    if (_curentPathFetching == nil)
+    {
+        _curentPathFetching = [path normalizedDropboxPath];
+        
+        NSDictionary *blocks = @{@"completion":completeBlock,
+                                 @"error":errorBlock};
+        
+        [self.pathReqDictionary setObject:blocks forKey:path];
+        
+        [self.restClient loadMetadata:path];
+        
+        return YES;
+    }
+    
+    return NO;
+}
+
+- (void)queueFetchPathRequest:(NSDictionary *)request
+{
+    
+    @synchronized(self.pathReqQueue) {
+        
+        NSInteger index = 0;
+        
+        NSDate *now = [NSDate date];
+        
+        while (index < [self.pathReqQueue count]) {
+            
+            NSDictionary *req = self.pathReqQueue[index];
+            
+            if ([req[@"path"] isEqualToString:request[@"path"]] ||
+                [now timeIntervalSinceDate:req[@"date"]] > kThumbnailRequestMaxAge)
+            {
+                [self.pathReqQueue removeObjectAtIndex:index];
+                continue;
+            }
+            
+            index ++;
+            
+        }
+        
+        [self.pathReqQueue addObject:request];
     }
 }
 
@@ -344,21 +592,29 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     
     if ([self.restClient requestCount] < kMaxRequestCount) {
         
-        [self downloadPhotoAtURL:path withCompletionBlock:completeBlock];
+        [self downloadPhotoAtPath:path withCompletionBlock:completeBlock];
         
     } else {
         
         NSDictionary *request = @{@"path":path,
+                                  @"size":@"xl",
                                   @"completion":completeBlock,
                                   @"date":[NSDate date]};
         
-        [self queuePhotoDownloadRequest:request];
+        if ([path hasSuffix:@".png"] || [path hasSuffix:@".jpg"])
+        {
+            [self queuePhotoDownloadRequest:request];
+        }
+        else
+        {
+            [self queueThumbnailDownloadRequest:request];
+        }
     }
     
 }
 
 
-- (void)downloadPhotoAtURL:(NSString *)path withCompletionBlock:(GRKDropboxDownloadCompleteBlock)completeBlock
+- (void)downloadPhotoAtPath:(NSString *)path withCompletionBlock:(GRKDropboxDownloadCompleteBlock)completeBlock
 {
     
     CFUUIDRef newUniqueId = CFUUIDCreate(kCFAllocatorDefault);
@@ -377,9 +633,17 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     if ([[NSFileManager defaultManager] fileExistsAtPath:photoPath])
         [[NSFileManager defaultManager] removeItemAtPath:photoPath error:nil];
     
-    
-    [self.photoReqDictionary setObject:completeBlock forKey:photoPath];
-    [self.restClient loadFile:path intoPath:photoPath];
+    if ([path hasSuffix:@".png"] || [path hasSuffix:@".jpg"])
+    {
+        
+        [self.photoReqDictionary setObject:completeBlock forKey:photoPath];
+        [self.restClient loadFile:path intoPath:photoPath];
+    }
+    else
+    {
+        [self.thumbnailReqDictionary setObject:completeBlock forKey:photoPath];
+        [self.restClient loadThumbnail:path ofSize:@"xl" intoPath:photoPath];
+    }
 }
 
 - (void)queuePhotoDownloadRequest:(NSDictionary *)request
@@ -393,9 +657,9 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
         
         while (index < [self.photoReqQueue count]) {
             
-            NSDictionary *request = self.photoReqQueue[index];
+            NSDictionary *req = self.photoReqQueue[index];
             
-            if ([now timeIntervalSinceDate:request[@"date"]] > kPhotoRequestMaxAge) {
+            if ([now timeIntervalSinceDate:req[@"date"]] > kPhotoRequestMaxAge) {
                 
                 [self.photoReqQueue removeObjectAtIndex:index];
                 
@@ -407,34 +671,8 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
             
         }
         
-        [self.thumbnailReqQueue addObject:request];
+        [self.photoReqQueue addObject:request];
     }
-}
-
-- (NSInteger)processNextPhotoRequestsInQueue
-{
-    
-    NSInteger procceedCount = 0;
-    
-    @synchronized(self.photoReqQueue) {
-        
-        while ([self.restClient requestCount] < kMaxRequestCount) {
-            
-            NSDictionary *request = [self.photoReqQueue lastObject];
-            
-            if (request == nil)
-                break;
-            
-            [self downloadPhotoAtURL:request[@"path"] withCompletionBlock:request[@"completion"]];
-            
-            [self.photoReqQueue removeObject:request];
-            
-            procceedCount ++;
-        }
-        
-    }
-    
-    return procceedCount;
 }
 
 #pragma mark Thumbnail
@@ -453,6 +691,7 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     } else {
         
         NSDictionary *request = @{@"path":path,
+                                  @"size":@"m",
                                   @"completion":completeBlock,
                                   @"date":[NSDate date]};
         
@@ -496,14 +735,18 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
         
         while (index < [self.thumbnailReqQueue count]) {
             
-            NSDictionary *request = self.thumbnailReqQueue[index];
+            NSDictionary *req = self.thumbnailReqQueue[index];
             
-            if ([now timeIntervalSinceDate:request[@"date"]] > kThumbnailRequestMaxAge) {
-                
+            if ([req[@"path"] isEqualToString:request[@"path"]] &&
+                [req[@"size"] isEqualToString:request[@"size"]])
+            {
                 [self.thumbnailReqQueue removeObjectAtIndex:index];
-                
                 continue;
-                
+            }
+            else if ([now timeIntervalSinceDate:req[@"date"]] > kThumbnailRequestMaxAge)
+            {
+                [self.thumbnailReqQueue removeObjectAtIndex:index];
+                continue;
             }
             
             index ++;
@@ -512,32 +755,6 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
         
         [self.thumbnailReqQueue addObject:request];
     }
-}
-
-- (NSInteger)processNextThumanilRequestsInQueue
-{
-    
-    NSInteger procceedCount = 0;
-    
-    @synchronized(self.thumbnailReqQueue) {
-        
-        while ([self.restClient requestCount] < kMaxRequestCount) {
-            
-            NSDictionary *request = [self.thumbnailReqQueue lastObject];
-            
-            if (request == nil)
-                break;
-            
-            [self downloadThumbnailAtPath:request[@"path"] withCompletionBlock:request[@"completion"]];
-            
-            [self.thumbnailReqQueue removeObject:request];
-            
-            procceedCount ++;
-        }
-        
-    }
-    
-    return procceedCount;
 }
 
 #pragma mark DBRestClient Delegate
@@ -574,6 +791,80 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
     _profileCompleteBlock = nil;
 }
 
+- (void)restClient:(DBRestClient *)client loadedMetadata:(DBMetadata *)metadata
+{
+    
+    if ([metadata isDirectory])
+    {
+        
+        NSString *path = [[metadata path] normalizedDropboxPath];
+        
+        if ([path isEqualToString:_curentPathFetching])
+        {
+            _curentPathFetching = nil;
+        }
+        else
+        {
+            NSLog(@"Unexpected error !!!");
+        }
+        
+        NSDictionary *blocks = [self.pathReqDictionary objectForKey:path];
+        
+        GRKServiceGrabberCompleteBlock completion = (GRKServiceGrabberCompleteBlock)[blocks objectForKey:@"completion"];
+        
+        if (completion)
+        {
+            NSMutableArray *array = [NSMutableArray arrayWithCapacity:[metadata.contents count]];
+            
+            for (NSInteger index = 0; index < [metadata.contents count]; index ++)
+            {
+                DBMetadata *item = metadata.contents[index];
+                [array addObject:[self grkObjectWithMetaData:item]];
+            }
+            
+            [array sortUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+                if ([obj1 isKindOfClass:[GRKAlbum class]])
+                    return NSOrderedAscending;
+                
+                if ([obj2 isKindOfClass:[GRKAlbum class]])
+                    return NSOrderedDescending;
+                
+                return NSOrderedSame;
+            }];
+            
+            dispatch_async_on_main_queue(completion,array);
+            
+            [self.pathReqDictionary removeObjectForKey:path];
+        }
+    }
+    else
+    {
+        
+    }
+    
+    [self processNextRequest];
+}
+
+- (void)restClient:(DBRestClient*)client loadMetadataFailedWithError:(NSError*)error
+{
+    if (_curentPathFetching)
+    {
+        
+        NSDictionary *blocks = [self.pathReqDictionary objectForKey:_curentPathFetching];
+        GRKErrorBlock errorBlock = (GRKErrorBlock)[blocks objectForKey:@"error"];
+        
+        if (error)
+        {
+            NSError *err = [GRKServiceGrabber errorForBadFormatResultForAlbumsOperationWithOriginalError:error forService:@"dropbox"];
+            dispatch_async_on_main_queue(errorBlock, err);
+            [self.pathReqDictionary removeObjectForKey:_curentPathFetching];
+        }
+        
+        _curentPathFetching = nil;
+    }
+    
+    [self processNextRequest];
+}
 
 - (void)restClient:(DBRestClient*)restClient loadedSearchResults:(NSArray*)results
            forPath:(NSString*)path keyword:(NSString*)keyword
@@ -594,7 +885,6 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
             }
             
         }
-        
         
         NSArray *res = [NSArray arrayWithArray:array];
         
@@ -644,16 +934,14 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
         }
     }
     
-    if ([self processNextPhotoRequestsInQueue] == 0)
-        [self processNextThumanilRequestsInQueue];
+    [self processNextRequest];
 }
 
 - (void)restClient:(DBRestClient*)client loadFileFailedWithError:(NSError*)error
 {
     NSLog(@"Dropbox error : %@", error);
     
-    if ([self processNextPhotoRequestsInQueue] == 0)
-        [self processNextThumanilRequestsInQueue];
+    [self processNextRequest];
 }
 
 - (void)restClient:(DBRestClient*)client loadedThumbnail:(NSString*)destPath metadata:(DBMetadata*)metadata
@@ -674,16 +962,14 @@ typedef void (^GRKDropboxOpenSessionBlock)(BOOL success);
         }
     }
     
-    if ([self processNextThumanilRequestsInQueue] == 0)
-        [self processNextPhotoRequestsInQueue];
+    [self processNextRequest];
 }
 
 - (void)restClient:(DBRestClient*)client loadThumbnailFailedWithError:(NSError*)error
 {
     NSLog(@"Dropbox error : %@", error);
     
-    if ([self processNextThumanilRequestsInQueue] == 0)
-        [self processNextPhotoRequestsInQueue];
+    [self processNextRequest];
 }
 
 

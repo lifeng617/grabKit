@@ -26,7 +26,7 @@
 
 // do NOT change these constants
 #define kGRKMaximumNumberOfAlbumsPerPage 500
-#define kGRKMaximumNumberOfPhotosPerPage 10000
+#define kGRKMaximumNumberOfPhotosPerPage 1000000
 
 // Block passed to a grabber and performed after a successful operation.
 typedef void (^GRKServiceGrabberCompleteBlock)(id result);

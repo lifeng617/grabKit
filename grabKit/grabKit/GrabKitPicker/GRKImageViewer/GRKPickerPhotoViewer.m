@@ -274,20 +274,20 @@
     self.imageView.image = image;
     
     
-    UITapGestureRecognizer *oneTapGesture;
-    
-    oneTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onToggleZoom:)];
-    oneTapGesture.numberOfTapsRequired = 2;
-    [self.view addGestureRecognizer:oneTapGesture];
-    
-    
-    
-    
     UITapGestureRecognizer *doubleTapGesutre;
     
-    doubleTapGesutre = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onToggleMenu:)];
-    doubleTapGesutre.numberOfTapsRequired = 1;
+    doubleTapGesutre = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onToggleZoom:)];
+    doubleTapGesutre.numberOfTapsRequired = 2;
     [self.view addGestureRecognizer:doubleTapGesutre];
+    
+    
+    
+    
+    UITapGestureRecognizer *oneTapGesture;
+    
+    oneTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onToggleMenu:)];
+    oneTapGesture.numberOfTapsRequired = 1;
+    [self.view addGestureRecognizer:oneTapGesture];
     
     
     [oneTapGesture requireGestureRecognizerToFail:doubleTapGesutre];

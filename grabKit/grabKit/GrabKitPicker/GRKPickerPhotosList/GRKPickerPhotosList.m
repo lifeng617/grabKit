@@ -125,13 +125,16 @@ NSUInteger kCellHeight = 75;
     }
     [self.view addSubview:_tipLabel];
     
+    CGSize sz = [UIScreen mainScreen].bounds.size;
+    sz.width = sz.width / 4 - 1;
+    sz.height = sz.width;
     
 
     UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-    [flowLayout setItemSize:CGSizeMake(kCellWidth, kCellHeight)];
+    [flowLayout setItemSize:sz];
     [flowLayout setMinimumInteritemSpacing:1.0f];
-    [flowLayout setMinimumLineSpacing:4.0f];
-    [flowLayout setSectionInset:UIEdgeInsetsMake(4, 4, 4, 4)];
+    [flowLayout setMinimumLineSpacing:1.0f];
+    [flowLayout setSectionInset:UIEdgeInsetsMake(1, 0, 1, 0)];
 
     
     _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 40, screenSz.width, screenSz.height - 40)

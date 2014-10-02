@@ -164,6 +164,14 @@
   
 }
 
++(NSError *)errorForBadConnectionForService:(NSString *)service
+{
+    NSString * errorDomain = [NSString stringWithFormat:@"com.grabKit.%@.connection", service];
+    NSDictionary * userInfo = [NSDictionary dictionaryWithObject:kGRKBadConnectionErrorLocalizedDescription forKey:NSLocalizedDescriptionKey];
+    NSError * error = [NSError errorWithDomain:errorDomain code:kGRKBadConnectionErrorCode userInfo:userInfo];
+    
+    return error;
+}
 
 
 -(NSError *)errorForAlbumsOperationWithOriginalError:(NSError *)originalError {
@@ -194,6 +202,17 @@
     
     return error;
     
+}
+
++(NSError *)errorForBadFormatResultForAlbumsOperationWithOriginalError:(NSError *)originalError forService:(NSString *)service {
+    
+    NSString * errorDomain = [NSString stringWithFormat:@"com.grabKit.%@.albums", service];
+    NSDictionary * userInfo = [NSDictionary dictionaryWithObjectsAndKeys:kGRKBadFormatResultErrorLocalizedDescription, NSLocalizedDescriptionKey,
+                               originalError, kGRKErrorOriginalErrorKey,
+                               nil];
+    NSError * error = [NSError errorWithDomain:errorDomain code:kGRKBadFormatResultErrorCode userInfo:userInfo];
+    
+    return error;
 }
 
 

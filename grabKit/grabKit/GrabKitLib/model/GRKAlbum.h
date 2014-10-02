@@ -119,6 +119,8 @@ extern GRKAlbumDateProperty * const kGRKAlbumDatePropertyDateUpdated;
 
 @property (nonatomic, strong) NSString *albumType;
 
+@property (nonatomic, strong) id data;
+
 /** @name Creating a GRKAlbum */
 
 /** Creates and returns a GRKAlbum object with the given parameters
