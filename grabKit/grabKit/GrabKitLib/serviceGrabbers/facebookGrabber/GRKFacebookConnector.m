@@ -33,6 +33,7 @@
 #import "GRKTokenStore.h"
 
 #import <FacebookSDK/FBSession.h>
+#import <FacebookSDK/FBSettings.h>
 #import <FacebookSDK/FBError.h>
 
 
@@ -75,8 +76,8 @@ static NSString * expirationDateKey = @"ExpirationDateKey";
             [[GRKConnectorsDispatcher sharedInstance] registerServiceConnectorAsConnecting:self];
             _applicationDidEnterBackground = NO;
         
-            [FBSession setDefaultAppID:[GRKCONFIG facebookAppId]];
-            NSArray *permissions = [NSArray arrayWithObjects:@"email", @"user_photos", @"user_photo_video_tags", nil];
+            [FBSettings setDefaultAppID:[GRKCONFIG facebookAppId]];
+            NSArray *permissions = [NSArray arrayWithObjects:@"email", @"public_profile"/*, @"user_photos"*/, nil];
         
         
             // The "_isConnecting" flag is usefull to use the FBSession object in a different purpose than it was built for.

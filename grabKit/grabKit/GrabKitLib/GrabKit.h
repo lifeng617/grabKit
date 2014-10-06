@@ -26,7 +26,7 @@
 #define grabKit_GrabKit_h
 
 
-#define GRK_FACEBOOK_SERVICE 1
+//#define GRK_FACEBOOK_SERVICE 1
 //#define GRK_FLICKR_SERVICE 1
 #define GRK_INSTAGRAM_SERVICE 1
 //#define GRK_PICASA_SERVICE 1

@@ -25,6 +25,7 @@
 #import "GRKFacebookSingleton.h"
 #import "GRKConstants.h"
 #import <FacebookSDK/FBSession.h>
+#import <FacebookSDK/FBSettings.h>
 
 static GRKFacebookSingleton * sharedFacebook = nil;
 
@@ -51,8 +52,7 @@ static GRKFacebookSingleton * sharedFacebook = nil;
     if ((self = [super init]) != nil){
     
 
-        [FBSession setDefaultAppID:[GRKCONFIG facebookAppId]];
-        
+        [FBSettings setDefaultAppID:[GRKCONFIG facebookAppId]];
         facebookSession = [FBSession activeSession];
         
         
