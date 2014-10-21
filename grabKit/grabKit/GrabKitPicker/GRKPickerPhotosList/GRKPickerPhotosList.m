@@ -109,6 +109,7 @@ NSUInteger kCellHeight = 75;
     
     CGSize screenSz = self.view.bounds.size;
     _tipLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, screenSz.width, 40)];
+    _tipLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     _tipLabel.font = [UIFont systemFontOfSize:14];
     _tipLabel.textAlignment = NSTextAlignmentCenter;
     _tipLabel.textColor = [UIColor darkGrayColor];

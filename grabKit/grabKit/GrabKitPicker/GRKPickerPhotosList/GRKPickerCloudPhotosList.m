@@ -380,6 +380,7 @@
     
     CGSize viewSz = _contentView.bounds.size;
     _tipLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, viewSz.width, 40)];
+    _tipLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     _tipLabel.font = [UIFont systemFontOfSize:14];
     _tipLabel.textAlignment = NSTextAlignmentCenter;
     _tipLabel.textColor = [UIColor darkGrayColor];
