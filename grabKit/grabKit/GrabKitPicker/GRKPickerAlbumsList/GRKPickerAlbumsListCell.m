@@ -78,7 +78,7 @@
     
     // Now, let's compute and set the frame of the label for the photos count 
     
-    NSString * labelPhotosCountText = [NSString stringWithFormat:@"(%d)", _album.count ];
+    NSString * labelPhotosCountText = [NSString stringWithFormat:@"(%d)", (int)_album.count ];
     
     // 50px is the maximum width for this label. it is supposed to be enough to contain the string "(999+)" without truncating
     CGSize labelPhotosCountSize = [labelPhotosCountText sizeWithFont:labelPhotosCount.font

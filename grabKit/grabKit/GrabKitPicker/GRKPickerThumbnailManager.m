@@ -29,7 +29,9 @@
 #import "GRKPickerViewController.h"
 #import "GRKPickerViewController+privateMethods.h"
 #import <AssetsLibrary/AssetsLibrary.h>
+#ifdef __IPHONE_8_0
 #import <Photos/Photos.h>
+#endif
 #import "GrabKit.h"
 #import "NSString+MD5.h"
 
@@ -266,6 +268,7 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     {
         [self downloadThumbnailAtURL:grkImage.URL forThumbnailSize:CGSizeZero withCompleteBlock:completeBlock andErrorBlock:errorBlock];
     }
+#ifdef __IPHONE_8_0
     else if (grkImage.asset && [grkImage.asset isKindOfClass:[PHAsset class]])
     {
         
@@ -283,6 +286,7 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
             
         }];
     }
+#endif
 }
 
 -(void) downloadThumbnailWithGRKImage:(GRKImage*)grkImage
@@ -294,6 +298,7 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
     {
         [self downloadThumbnailAtURL:grkImage.URL forThumbnailSize:thumbnailSize withCompleteBlock:completeBlock andErrorBlock:errorBlock];
     }
+#ifdef __IPHONE_8_0
     else if (grkImage.asset && [grkImage.asset isKindOfClass:[PHAsset class]])
     {
         
@@ -311,6 +316,7 @@ NSUInteger maxNumberOfThumbnailsToDownloadSimultaneously = 5;
             
         }];
     }
+#endif
 }
 
 -(void) downloadThumbnailAtURL:(NSURL*)thumbnailURL forThumbnailSize:(CGSize)thumbnailSize withCompleteBlock:(GRKPickerThumbnailManagerCompleteBlock)completeBlock andErrorBlock:(GRKPickerThumbnailManagerErrorBlock)errorBlock {

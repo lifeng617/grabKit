@@ -30,7 +30,10 @@
 #import "GRKAlbum+modify.h"
 
 #import "NSIndexSet+pagination.h"
+
+#ifdef __IPHONE_8_0
 #import <Photos/Photos.h>
+#endif
 
 
 static NSString *kGRKServiceNameDevice = @"device";
@@ -93,14 +96,25 @@ static NSString *kGRKServiceNameDevice = @"device";
                       andCompleteBlock:(GRKServiceGrabberCompleteBlock)completeBlock
                          andErrorBlock:(GRKErrorBlock)errorBlock
 {
+#ifdef __IPHONE_8_0
     if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8)
     {
         [self PHAlbumsOfCurrentUserAtPageIndex:pageIndex withNumberOfAlbumsPerPage:numberOfAlbumsPerPage andCompleteBlock:completeBlock andErrorBlock:errorBlock];
     }
     else
+#endif
     {
         [self ALAlbumsOfCurrentUserAtPageIndex:pageIndex withNumberOfAlbumsPerPage:numberOfAlbumsPerPage andCompleteBlock:completeBlock andErrorBlock:errorBlock];
     }
+}
+
+#ifdef __IPHONE_8_0
+
+-(GRKAlbum *)albumWithPHCollection:(PHAssetCollection *)collection withCount:(NSInteger)assetCount
+{
+    GRKAlbum * album = [GRKAlbum albumWithId:collection.localIdentifier andName:collection.localizedTitle andCount:assetCount andDates:nil];
+    album.albumType = @"";
+    return album;
 }
 
 -(void) PHAlbumsOfCurrentUserAtPageIndex:(NSUInteger)pageIndex
@@ -123,94 +137,61 @@ static NSString *kGRKServiceNameDevice = @"device";
      _ Then, we retrieve all the other groups, minus one (all types of ALAssetsGroup, except ALAssetsGroupSavedPhotos)
      */
     
-    
-    if ( pageIndex == 0 ){
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
         
-        // The dictionary of albums that will be sent to the caller
-        __block NSMutableArray * albums = [[NSMutableArray alloc] init];
+        NSMutableArray * albums = [[NSMutableArray alloc] init];
+        if ( pageIndex == 0) {
+            
+            NSMutableArray *array = [NSMutableArray array];
+            
+            PHFetchResult *collections = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:nil];
+            
+            [collections enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+                [array addObject:obj];
+            }];
+            
+            collections = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeSmartAlbumFavorites options:nil];
+            
+            [collections enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+                [array addObject:obj];
+            }];
+            
+            collections = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum subtype:PHAssetCollectionSubtypeAny options:nil];
+            
+            [collections enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+                [array addObject:obj];
+            }];
+            
+            collections = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum subtype:PHAssetCollectionSubtypeAlbumCloudShared options:nil];
+            
+            NSMutableArray *excludeList = [NSMutableArray array];
+            
+            [collections enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+                [excludeList addObject:obj];
+            }];
+            
+            [array removeObjectsInArray:excludeList];
+            
+            for (PHAssetCollection *collection in array)
+            {
+                
+                PHFetchOptions *options = [[PHFetchOptions alloc] init];
+                options.predicate = [NSPredicate predicateWithFormat:@"mediaType == %@", @(PHAssetMediaTypeImage)];
+                
+                PHFetchResult *assets = [PHAsset fetchAssetsInAssetCollection:collection options:options];
+                
+                GRKAlbum *album = [self albumWithPHCollection:collection withCount:[assets count]];
+                [assetsGroupsById setObject:collection forKey:album.albumId];
+                [albums addObject:album];
+            }
+            
+            dispatch_async_on_main_queue(completeBlock, albums);
+            
+        }
         
-        [self albumsOfCurrentUserFromIndex:0
-                                   toIndex:0
-                            andGroupsTypes:ALAssetsGroupSavedPhotos
-                          andCompleteBlock:^(NSArray *results) {
-                              
-                              if ( [results count] != 1 ){
-                                  
-                                  if ( errorBlock != nil ){
-                                      
-                                      NSString * errorDomain = [NSString stringWithFormat:@"com.grabKit.%@", _serviceName];
-                                      NSError * error = [NSError errorWithDomain:errorDomain code:404 userInfo:nil];
-                                      errorBlock(error);
-                                  }
-                                  return;
-                              }
-                              
-                              [albums addObject:results[0]];
-                              
-                              [self albumsOfCurrentUserFromIndex:0
-                                                         toIndex:(numberOfAlbumsPerPage>=3)?(numberOfAlbumsPerPage-3):0
-                                                  andGroupsTypes:(ALAssetsGroupAll & ~ALAssetsGroupSavedPhotos)
-                                                andCompleteBlock:^(NSArray *results) {
-                                                    
-                                                    [albums addObjectsFromArray:results];
-                                                    
-                                                    {
-                                                        
-                                                        // Fetch All PHPhotos
-                                                        
-                                                        PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
-                                                        fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:YES]];
-                                                        
-                                                        PHFetchResult *result = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:fetchOptions];
-                                                        
-                                                        NSString * albumName = @"All Photos";
-                                                        NSString * albumId = @"PHALLPhotos";
-                                                        NSUInteger count = [result count];
-                                                        
-                                                        // Build the GRKAlbum
-                                                        GRKAlbum * album = [GRKAlbum albumWithId:albumId andName:albumName andCount:count  andDates:nil];
-                                                        album.albumType = @"All Photos";
-                                                        // add the GRKAlbum to the result dictionary
-                                                        [albums insertObject:album atIndex:0];
-                                                        // keep a reference to the group for the albumId
-                                                        [assetsGroupsById setObject:result forKey:albumId];
-                                                    }
-                                                    
-                                                    dispatch_async_on_main_queue(completeBlock, albums);
-                                                    return;
-                                                    
-                                                } andErrorBlock:^(NSError *error) {
-                                                    
-                                                    if ( errorBlock != nil ){
-                                                        errorBlock(error);
-                                                    }
-                                                    return;
-                                                }];
-                              
-                          } andErrorBlock:^(NSError *error) {
-                              
-                              if ( errorBlock != nil ){
-                                  errorBlock(error);
-                              }
-                              return;
-                          }];
-        
-    } else {
-        
-        [self albumsOfCurrentUserFromIndex:(pageIndex*numberOfAlbumsPerPage)-1
-                                   toIndex:((pageIndex+1)*numberOfAlbumsPerPage)-2
-                            andGroupsTypes:(ALAssetsGroupAll & ~ALAssetsGroupSavedPhotos)
-                          andCompleteBlock:^(NSArray *results) {
-                              
-                              dispatch_async_on_main_queue(completeBlock, results);
-                              return;
-                              
-                          } andErrorBlock:^(NSError *error) {
-                              
-                          }];
-        
-    }
+    });
 }
+#endif
 
 -(void) ALAlbumsOfCurrentUserAtPageIndex:(NSUInteger)pageIndex
               withNumberOfAlbumsPerPage:(NSUInteger)numberOfAlbumsPerPage
@@ -549,9 +530,10 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
         });
         
     }
-    else if ([group isKindOfClass:[PHFetchResult class]])
+#ifdef __IPHONE_8_0
+    else if ([group isKindOfClass:[PHAssetCollection class]])
     {
-        PHFetchResult *fetchResult = (PHFetchResult *)group;
+        PHAssetCollection *collection = (PHAssetCollection *)group;
         
         [self incrementQueriesCount];
         cancelAllFlag = NO;
@@ -561,6 +543,12 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
             // the array of GRKPhoto for this page of the album
             __block NSMutableArray * newPhotos = [NSMutableArray array];
             __block id me = self;
+            
+            PHFetchOptions *options = [[PHFetchOptions alloc] init];
+            options.predicate = [NSPredicate predicateWithFormat:@"mediaType == %@", @(PHAssetMediaTypeImage)];
+            options.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:YES]];
+            
+            PHFetchResult *fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:options];
             
             NSUInteger count = [fetchResult count];
             
@@ -580,6 +568,7 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
             
         });
     }
+#endif
     else
     {
         dispatch_async_on_main_queue(errorBlock, [self errorForFillAlbumOperationWithOriginalError:nil]);
@@ -721,28 +710,48 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
                                               
                                           }];
     }
-    else if ([group isKindOfClass:[PHFetchResult class]])
+#ifdef __IPHONE_8_0
+    else if ([group isKindOfClass:[PHAssetCollection class]])
     {
-        PHFetchResult *fetchResult = (PHFetchResult *)group;
-        PHAsset *lastAsset = [fetchResult lastObject];
-        PHImageRequestOptions *imageOptions = [[PHImageRequestOptions alloc] init];
-        imageOptions.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
-        imageOptions.networkAccessAllowed = YES;
+        PHAssetCollection *collection = (PHAssetCollection *)group;
+        PHFetchOptions *options = [[PHFetchOptions alloc] init];
+        options.predicate = [NSPredicate predicateWithFormat:@"mediaType == %@", @(PHAssetMediaTypeImage)];
+        options.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:YES]];
+        PHFetchResult *fetchResult = [PHAsset fetchKeyAssetsInAssetCollection:collection options:options];
         
-        [self incrementQueriesCount];
-        [[PHImageManager defaultManager] requestImageForAsset:lastAsset targetSize:CGSizeMake(120, 120) contentMode:PHImageContentModeAspectFill options:imageOptions resultHandler:^(UIImage *result, NSDictionary *info) {
+        // some albums don't have the key assets.
+        if ([fetchResult count] == 0)
+            fetchResult = [PHAsset fetchAssetsInAssetCollection:collection options:options];
+        
+        PHAsset *lastAsset = [fetchResult lastObject];
+        
+        if (lastAsset)
+        {
+            PHImageRequestOptions *imageOptions = [[PHImageRequestOptions alloc] init];
+            imageOptions.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
+            imageOptions.networkAccessAllowed = YES;
             
-            [self decrementQueriesCount];
-            
-            if (result) {
-                GRKPhoto *photo = [[GRKPhoto alloc] init];
-                photo.thumbnail = result;
-                album.coverPhoto = photo;
-            }
-            
+            [self incrementQueriesCount];
+            [[PHImageManager defaultManager] requestImageForAsset:lastAsset targetSize:CGSizeMake(120, 120) contentMode:PHImageContentModeAspectFill options:imageOptions resultHandler:^(UIImage *result, NSDictionary *info) {
+                
+                [self decrementQueriesCount];
+                
+                if (result) {
+                    GRKPhoto *photo = [[GRKPhoto alloc] init];
+                    photo.thumbnail = result;
+                    album.coverPhoto = photo;
+                }
+                
+                dispatch_async_on_main_queue(completeBlock, album);
+            }];
+        }
+        else
+        {
+            NSLog(@"no key assets for : %@", collection.localizedTitle);
             dispatch_async_on_main_queue(completeBlock, album);
-        }];
+        }
     }
+#endif
     else
     {
         dispatch_async_on_main_queue(errorBlock, [self errorForFillCoverOperation]);
@@ -902,6 +911,7 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
     return photo;
 }
 
+#ifdef __IPHONE_8_0
 -(GRKPhoto*) defaultPhotoFromPHAsset:(PHAsset *)asset atIndex:(NSUInteger)index
 {
     
@@ -920,6 +930,7 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
     
     return photo;
 }
+#endif
 
 /** Build and return a GRKImage from an ALAssetRepresentation.
  

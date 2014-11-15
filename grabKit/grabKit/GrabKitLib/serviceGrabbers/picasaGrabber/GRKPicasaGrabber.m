@@ -146,7 +146,7 @@ static NSString *kGRKServiceNamePicasa = @"Picasa";
         
         NSException* exception = [NSException
                                   exceptionWithName:@"numberOfAlbumsPerPageTooHigh"
-                                  reason:[NSString stringWithFormat:@"The number of albums per page you asked (%d) is too high", numberOfAlbumsPerPage]
+                                  reason:[NSString stringWithFormat:@"The number of albums per page you asked (%d) is too high", (int)numberOfAlbumsPerPage]
                                   userInfo:nil];
         @throw exception;
     }
@@ -155,8 +155,8 @@ static NSString *kGRKServiceNamePicasa = @"Picasa";
     // use pageIndex+1 because Picasa starts at page 1, and we start at page 0
 	NSUInteger startIndex = (pageIndex * numberOfAlbumsPerPage)+1;
     NSMutableDictionary * paramsDict = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-                                				 [NSNumber numberWithInt:numberOfAlbumsPerPage], @"max-results", 
-                                				 [NSNumber numberWithInt:startIndex], @"start-index",
+                                				 [NSNumber numberWithUnsignedInteger:numberOfAlbumsPerPage], @"max-results",
+                                				 [NSNumber numberWithUnsignedInteger:startIndex], @"start-index",
                               			nil];
 	
     
@@ -236,7 +236,7 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
         
         NSException* exception = [NSException
                                   exceptionWithName:@"numberOfPhotosPerPageTooHigh"
-                                  reason:[NSString stringWithFormat:@"The number of photos per page you asked (%d) is too high", numberOfPhotosPerPage]
+                                  reason:[NSString stringWithFormat:@"The number of photos per page you asked (%d) is too high", (int)numberOfPhotosPerPage]
                                   userInfo:nil];
         @throw exception;
     }

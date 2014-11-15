@@ -390,10 +390,10 @@
         if ([parent minimumSelectionAllowed] == 1) {
             _tipLabel.text = @"Pick 1 photo for your card.";
         } else {
-            _tipLabel.text = [NSString stringWithFormat:@"Pick %d photos for your card.", [parent minimumSelectionAllowed]];
+            _tipLabel.text = [NSString stringWithFormat:@"Pick %d photos for your card.", (int)[parent minimumSelectionAllowed]];
         }
     } else {
-        _tipLabel.text = [NSString stringWithFormat:@"%d of %d photos selected.", [[parent selectedPhotos] count], [parent minimumSelectionAllowed]];
+        _tipLabel.text = [NSString stringWithFormat:@"%d of %d photos selected.", (int)[[parent selectedPhotos] count], (int)[parent minimumSelectionAllowed]];
     }
     [_contentView addSubview:_tipLabel];
     

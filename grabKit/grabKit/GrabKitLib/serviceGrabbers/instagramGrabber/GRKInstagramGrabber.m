@@ -146,7 +146,7 @@ static NSString *kGRKServiceNameInstagram = @"Instagram";
         
         NSException* exception = [NSException
                                   exceptionWithName:@"numberOfAlbumsPerPageTooHigh"
-                                  reason:[NSString stringWithFormat:@"The number of albums per page you asked (%d) is too high", numberOfAlbumsPerPage]
+                                  reason:[NSString stringWithFormat:@"The number of albums per page you asked (%d) is too high", (int)numberOfAlbumsPerPage]
                                   userInfo:nil];
         @throw exception;
     }
@@ -219,14 +219,14 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
         
         NSException* exception = [NSException
                                   exceptionWithName:@"numberOfPhotosPerPageTooHigh"
-                                  reason:[NSString stringWithFormat:@"The number of photos per page you asked (%d) is too high", numberOfPhotosPerPage]
+                                  reason:[NSString stringWithFormat:@"The number of photos per page you asked (%d) is too high", (int)numberOfPhotosPerPage]
                                   userInfo:nil];
         @throw exception;
     }
   
     // First, let's build the parameters for the query
     NSMutableDictionary * params = [NSMutableDictionary dictionary];
-    [params setObject:[NSNumber numberWithInt:numberOfPhotosPerPage] forKey:@"count"];
+    [params setObject:[NSNumber numberWithUnsignedInteger:numberOfPhotosPerPage] forKey:@"count"];
     
     
     // Instagram doesn't offer the option to ask for photos at some page.

@@ -42,7 +42,7 @@
         
     } else if ( (index > 0 && [self count] == 0) || index > ([self count] -1) ){
         
-        for ( int i = [self count]; i <= index-1; i++){
+        for ( NSUInteger i = [self count]; i <= index-1; i++){
             [self addObject:objectToFillWith];
         }
 

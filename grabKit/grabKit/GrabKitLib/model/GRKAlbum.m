@@ -228,7 +228,7 @@ GRKAlbumDateProperty * const kGRKAlbumDatePropertyDateUpdated = @"kGRKAlbumDateP
 
     [datesDescription appendString:@">"];
 
-    return [NSString stringWithFormat:@"<%@: %p albumId:'%@' name:'%@' count:%d actual photos count:%d %@>", [self class], self, _albumId, _name, _count, [_photos count], datesDescription];
+    return [NSString stringWithFormat:@"<%@: %p albumId:'%@' name:'%@' count:%d actual photos count:%d %@>", [self class], self, _albumId, _name, (int)_count, (int)[_photos count], datesDescription];
     
 }
 

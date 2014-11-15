@@ -167,7 +167,7 @@ static NSString *kGRKServiceNameFlickr = @"FlickR";
         
         NSException* exception = [NSException
                                   exceptionWithName:@"numberOfAlbumsPerPageTooHigh"
-                                  reason:[NSString stringWithFormat:@"The number of albums per page you asked (%d) is too high", numberOfAlbumsPerPage]
+                                  reason:[NSString stringWithFormat:@"The number of albums per page you asked (%d) is too high", (int)numberOfAlbumsPerPage]
                                   userInfo:nil];
         @throw exception;
     }
@@ -176,8 +176,8 @@ static NSString *kGRKServiceNameFlickr = @"FlickR";
     NSMutableDictionary * params = [NSMutableDictionary  dictionary];
     
     // use pageIndex+1 because Flickr starts at page 1, and we start at page 0
-    [params setObject:[[NSNumber numberWithInt:pageIndex+1] stringValue] forKey:@"page"];  
-    [params setObject:[[NSNumber numberWithInt:numberOfAlbumsPerPage] stringValue] forKey:@"per_page"];   
+    [params setObject:[[NSNumber numberWithUnsignedInteger:pageIndex+1] stringValue] forKey:@"page"];
+    [params setObject:[[NSNumber numberWithUnsignedInteger:numberOfAlbumsPerPage] stringValue] forKey:@"per_page"];
     
     //#warning for dev only
     //[params setObject:@"35591378@N03" forKey:@"user_id"];
@@ -252,7 +252,7 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
         
         NSException* exception = [NSException
                                   exceptionWithName:@"numberOfPhotosPerPageTooHigh"
-                                  reason:[NSString stringWithFormat:@"The number of photos per page you asked (%d) is too high", numberOfPhotosPerPage]
+                                  reason:[NSString stringWithFormat:@"The number of photos per page you asked (%d) is too high", (int)numberOfPhotosPerPage]
                                   userInfo:nil];
         @throw exception;
     }
@@ -263,8 +263,8 @@ withNumberOfPhotosPerPage:(NSUInteger)numberOfPhotosPerPage
     [params setObject:album.albumId forKey:@"photoset_id"];
     
     // use pageIndex+1 because Flickr starts at page 1, and we start at page 0
-    [params setObject:[[NSNumber numberWithInt:pageIndex+1] stringValue] forKey:@"page"];  
-    [params setObject:[[NSNumber numberWithInt:numberOfPhotosPerPage] stringValue] forKey:@"per_page"];   
+    [params setObject:[[NSNumber numberWithUnsignedInteger:pageIndex+1] stringValue] forKey:@"page"];
+    [params setObject:[[NSNumber numberWithUnsignedInteger:numberOfPhotosPerPage] stringValue] forKey:@"per_page"];
     
     // ask only for photos, not for videos
     [params setObject:@"photos" forKey:@"media"];   
